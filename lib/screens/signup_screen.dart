@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -109,17 +110,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _pickImage() async {
     final ImagePicker _picker = ImagePicker();
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
     if (image != null) {
+      File file = File(image.path);
+      int fileSize = await file.length();
+      if (fileSize > 5 * 1024 * 1024) { // 5MB
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image is too large. Compressing...')),
+        );
+        file = await _compressImage(file);
+      }
       setState(() {
-        _profileImage = File(image.path);
+        _profileImage = file;
       });
     }
   }
 
+  Future<File> _compressImage(File file) async {
+    final filePath = file.absolute.path;
+    final lastIndex = filePath.lastIndexOf(RegExp(r'.jp'));
+    final splitName = filePath.substring(0, (lastIndex));
+    final outPath = "${splitName}_compressed.jpg";
+
+    final compressedImage = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      outPath,
+      quality: 70,
+    );
+
+    return File(compressedImage!.path);
+  }
+
   Future<String?> _uploadImage(File imageFile) async {
     try {
-      final String path = 'avatars/${DateTime.now().toIso8601String()}.png';
-      await Supabase.instance.client.storage.from('avatars').upload(path, imageFile);
+      final fileExt = imageFile!.path.split('.').last;
+      final String path = '${DateTime.now().toIso8601String()}.$fileExt';
+      final fileBytes = await imageFile.readAsBytes();
+      await Supabase.instance.client.storage.from('avatars').uploadBinary(path, fileBytes);
       return Supabase.instance.client.storage.from('avatars').getPublicUrl(path);
     } catch (e) {
       print('Error uploading image: $e');
@@ -147,14 +174,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
           email: _emailController.text,
           password: _passwordController.text,
           data: {
-            'nickname': nickname,
+            'display_name': nickname,
             'avatar_url': avatarUrl,
           },
         );
 
         if (response.user != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sign up successful! Please verify your email.')),
+            const SnackBar(content: Text('회원가입이 완료되었습니다!\n지금 바로 로그인하여 서비스를 이용해 보세요.')),
           );
           Navigator.push(
             context,

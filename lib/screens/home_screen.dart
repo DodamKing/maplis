@@ -1,10 +1,108 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'detail_screen.dart';
 import 'write_post_screen.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class HomeScreen extends StatefulWidget {
+  final bool isLoggedIn;
+
+  const HomeScreen({Key? key, required this.isLoggedIn}) : super(key: key);
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Map<String, dynamic>> _posts = [];
+  bool _isLoading = true;
+  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isLoggedIn) {
+      _fetchPosts();
+      _subscribeToChanges();
+    } else {
+      _loadPrototypePosts();
+    }
+  }
+
+  void _subscribeToChanges() {
+    Supabase.instance.client
+        .from('posts')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .listen((List<Map<String, dynamic>> data) {
+      _fetchPosts();
+    });
+  }
+
+  Future<void> _fetchPosts() async {
+    try {
+      final postsResponse = await Supabase.instance.client
+          .from('posts')
+          .select('*')
+          .order('created_at', ascending: false)
+          .limit(20);
+
+      List<Map<String, dynamic>> posts = List<Map<String, dynamic>>.from(postsResponse);
+
+      for (var post in posts) {
+        post['author'] = 'test'; // 임시로 'test'로 설정
+      }
+
+      setState(() {
+        _posts = posts;
+        _isLoading = false;
+      });
+
+    } catch (e) {
+      print('Error fetching posts: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _loadPrototypePosts() {
+    setState(() {
+      _posts = List.generate(20, (index) => {
+        'id': index,
+        'title': 'Trending Topic #$index',
+        'content': 'Check out this amazing content! #MZVibes #Trending',
+        'author': 'Influencer$index',
+        'likes': index * 100,
+        'dislikes': index * 10,
+      });
+      _isLoading = false;
+    });
+  }
+
+  void _onRefresh() async {
+    if (widget.isLoggedIn) {
+      await _fetchPosts();
+    } else {
+      _loadPrototypePosts();
+    }
+    _refreshController.refreshCompleted();
+  }
+
+  void _navigateToWritePost() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WritePostScreen(
+          isLoggedIn: widget.isLoggedIn,
+          onPrototypePostSaved: (post) {
+            setState(() {
+              _posts.insert(0, post);
+            });
+          },
+        ),
+      ),
+    ).then((_) => _onRefresh()); // 글 작성 후 새로고침
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,105 +124,107 @@ class HomeScreen extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
         ),
-        child: ListView.builder(
-          itemCount: 20,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DetailScreen(
-                        title: 'Trending Topic #$index',
-                        author: 'Influencer$index',
-                        content: 'Check out this amazing content! #MZVibes #Trending',
+        child: SmartRefresher(
+          controller: _refreshController,
+          onRefresh: _onRefresh,
+          child: _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : ListView.builder(
+            itemCount: _posts.length,
+            itemBuilder: (context, index) {
+              final post = _posts[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailScreen(
+                          title: post['title'],
+                          author: post['author'],
+                          content: post['content'],
+                        ),
                       ),
+                    );
+                  },
+                  child: Card(
+                    elevation: 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                  );
-                },
-                child: Card(
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  color: Colors.white.withOpacity(0.9),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundImage: NetworkImage('https://picsum.photos/seed/Influencer$index/100'),
-                              radius: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Influencer$index',
-                              style: GoogleFonts.pacifico(
-                                textStyle: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.purple.shade700,
+                    color: Colors.white.withOpacity(0.9),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundImage: NetworkImage('https://picsum.photos/seed/${post['author']}/100'),
+                                radius: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                post['author'],
+                                style: GoogleFonts.pacifico(
+                                  textStyle: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.purple.shade700,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          'Trending Topic #$index',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            ],
                           ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          'Check out this amazing content! #MZVibes #Trending',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.thumb_up, color: Colors.purple.shade400),
-                                SizedBox(width: 5),
-                                Text('${index * 100}'),
-                                SizedBox(width: 15),
-                                Icon(Icons.thumb_down, color: Colors.blue.shade400),
-                                SizedBox(width: 5),
-                                Text('${index * 10}'),
-                              ],
+                          SizedBox(height: 10),
+                          Text(
+                            post['title'],
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
-                            Icon(Icons.share, color: Colors.grey),
-                          ],
-                        ),
-                      ],
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            post['content'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.thumb_up, color: Colors.purple.shade400),
+                                  SizedBox(width: 5),
+                                  Text('${post['likes'] ?? 0}'),
+                                  SizedBox(width: 15),
+                                  Icon(Icons.thumb_down, color: Colors.blue.shade400),
+                                  SizedBox(width: 5),
+                                  Text('${post['dislikes'] ?? 0}'),
+                                ],
+                              ),
+                              Icon(Icons.share, color: Colors.grey),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add_rounded, color: Colors.white),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => WritePostScreen()),
-          );
-        },
+        onPressed: _navigateToWritePost,
         backgroundColor: Colors.purple.shade500,
       ),
     );

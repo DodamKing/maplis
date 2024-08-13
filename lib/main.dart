@@ -80,7 +80,7 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _screens = [
-      const HomeScreen(),
+      HomeScreen(isLoggedIn: widget.isLoggedIn),
       const CommunityScreen(),
       ProfileScreen(isLoggedIn: widget.isLoggedIn),
     ];

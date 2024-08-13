@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../main.dart';
 import 'signup_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -35,10 +36,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _socialLogin(String provider) async {
+    return print('$provider 구현이 필요합니다');
     try {
-      await Supabase.instance.client.auth.signInWithOAuth(
-        Provider.values.firstWhere((e) => e.toString() == 'Provider.$provider'),
-      );
+      if (provider == 'kakao') {
+        print('카카오 로그인 따로?');
+      } else {
+        await Supabase.instance.client.auth.signInWithOAuth(
+          Provider.values.firstWhere((e) => e.toString() == 'Provider.$provider'),
+        );
+      }
       // 소셜 로그인 성공 후 처리는 Supabase 인증 상태 변경 리스너에서 처리됩니다.
     } catch (e) {
       print('Social Login Error: $e');
@@ -131,25 +137,46 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: const Text('Login'),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      IconButton(
-                        icon: FaIcon(FontAwesomeIcons.google, color: Colors.white),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: CircleBorder(),
+                          padding: EdgeInsets.all(8),
+                        ),
+                        child: FaIcon(FontAwesomeIcons.google, color: Color(0xFF4285F4)),
                         onPressed: () => _socialLogin('google'),
                       ),
-                      IconButton(
-                        icon: FaIcon(FontAwesomeIcons.facebook, color: Colors.white),
-                        onPressed: () => _socialLogin('facebook'),
+                      SizedBox(width: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFFEE500),  // 카카오 노란색
+                          shape: CircleBorder(),
+                          padding: EdgeInsets.all(8),
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/images/kakao_login_icon.svg',
+                          width: 28,
+                          height: 28,
+                        ),
+                        onPressed: () => _socialLogin('kakao'),
                       ),
-                      IconButton(
-                        icon: FaIcon(FontAwesomeIcons.apple, color: Colors.white),
+                      SizedBox(width: 16),  // 간격 추가
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          shape: CircleBorder(),
+                          padding: EdgeInsets.all(8),
+                        ),
+                        child: FaIcon(FontAwesomeIcons.apple, color: Colors.white),
                         onPressed: () => _socialLogin('apple'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -197,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         shadowColor: Colors.transparent,
                         padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
