@@ -67,12 +67,12 @@ class _WritePostScreenState extends State<WritePostScreen> {
     if (_image != null) {
       final bytes = await _image!.readAsBytes();
       final fileExt = _image!.path.split('.').last;
-      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final fileName = 'post_images/${DateTime.now().toIso8601String()}.$fileExt';
       await Supabase.instance.client.storage
-          .from('post_images')
+          .from('publics')
           .uploadBinary(fileName, bytes);
       imageUrl = Supabase.instance.client.storage
-          .from('post_images')
+          .from('publicks')
           .getPublicUrl(fileName);
     }
 
@@ -86,6 +86,8 @@ class _WritePostScreenState extends State<WritePostScreen> {
         'title': _titleController.text,
         'content': _contentController.text,
         'user_id': user.id,
+        'author': user.userMetadata?['display_name'],
+        'avatar_url': user.userMetadata?['avatar_url']
       };
 
       if (imageUrl != null) {

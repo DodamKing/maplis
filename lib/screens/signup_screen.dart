@@ -144,12 +144,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<String?> _uploadImage(File imageFile) async {
     try {
       final fileExt = imageFile!.path.split('.').last;
-      final String path = '${DateTime.now().toIso8601String()}.$fileExt';
+      final String path = 'avatars/${DateTime.now().toIso8601String()}.$fileExt';
       final fileBytes = await imageFile.readAsBytes();
-      await Supabase.instance.client.storage.from('avatars').uploadBinary(path, fileBytes);
-      return Supabase.instance.client.storage.from('avatars').getPublicUrl(path);
+      await Supabase.instance.client.storage.from('publics').uploadBinary(path, fileBytes);
+      return Supabase.instance.client.storage.from('publics').getPublicUrl(path);
+      // return path;
     } catch (e) {
       print('Error uploading image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('이미지 업로드 중 오류가 발생했습니다.')),
+      );
       return null;
     }
   }
@@ -161,9 +165,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
 
       try {
-        String? avatarUrl;
+        String? avatarFileNm;
         if (_profileImage != null) {
-          avatarUrl = await _uploadImage(_profileImage!);
+          avatarFileNm = await _uploadImage(_profileImage!);
         }
 
         String nickname = _nicknameController.text.isNotEmpty
@@ -175,7 +179,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           password: _passwordController.text,
           data: {
             'display_name': nickname,
-            'avatar_url': avatarUrl,
+            'avatar_url': avatarFileNm,
           },
         );
 

@@ -89,12 +89,24 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Welcome to Maplis',
-                    style: GoogleFonts.pacifico(
-                      fontSize: 32,
-                      color: Colors.white,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Welcome to ',
+                        style: GoogleFonts.pacifico(
+                          fontSize: 32,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        '너플리스',
+                        style: GoogleFonts.eastSeaDokdo(
+                          fontSize: 46,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 48),
                   TextField(

@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       List<Map<String, dynamic>> posts = List<Map<String, dynamic>>.from(postsResponse);
 
       for (var post in posts) {
-        post['author'] = 'test'; // 임시로 'test'로 설정
+        post['author'] = (post['author'] as String?) ?? 'test';
       }
 
       setState(() {
@@ -108,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Maplis', style: GoogleFonts.pacifico(fontSize: 28, color: Colors.white)),
+        title: Text('너플리스', style: GoogleFonts.eastSeaDokdo(fontSize: 40, color: Colors.white)),
         actions: [
           IconButton(icon: const Icon(Icons.search_rounded, color: Colors.white), onPressed: () {}),
           IconButton(icon: const Icon(Icons.notifications_rounded, color: Colors.white), onPressed: () {}),
@@ -162,7 +162,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               CircleAvatar(
-                                backgroundImage: NetworkImage('https://picsum.photos/seed/${post['author']}/100'),
+                                backgroundImage: widget.isLoggedIn
+                                ? (post['avatar_url'] != null
+                                    ? NetworkImage(post['avatar_url'])
+                                    : NetworkImage('https://ui-avatars.com/api/?name=${post['author']}&background=random'))
+                                : NetworkImage('https://picsum.photos/seed/${post['author']}/100'),
                                 radius: 20,
                               ),
                               SizedBox(width: 10),
@@ -170,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 post['author'],
                                 style: GoogleFonts.pacifico(
                                   textStyle: TextStyle(
+                                    fontFamilyFallback: ['eastSeaDokdo'],
                                     fontSize: 18,
                                     color: Colors.purple.shade700,
                                   ),
