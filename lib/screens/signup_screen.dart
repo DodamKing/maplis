@@ -148,7 +148,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final fileBytes = await imageFile.readAsBytes();
       await Supabase.instance.client.storage.from('publics').uploadBinary(path, fileBytes);
       return Supabase.instance.client.storage.from('publics').getPublicUrl(path);
-      // return path;
     } catch (e) {
       print('Error uploading image: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,13 +176,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final response = await Supabase.instance.client.auth.signUp(
           email: _emailController.text,
           password: _passwordController.text,
-          data: {
-            'display_name': nickname,
-            'avatar_url': avatarFileNm,
-          },
+          // data: {
+          //   'display_name': nickname,
+          //   'avatar_url': avatarFileNm,
+          // },
         );
 
         if (response.user != null) {
+          await Supabase.instance.client.from('profiles').upsert({
+            'id': response.user!.id,
+            'display_name': nickname,
+            'avatar_url': avatarFileNm,
+          });
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('회원가입이 완료되었습니다!\n지금 바로 로그인하여 서비스를 이용해 보세요.')),
           );

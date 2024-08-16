@@ -72,7 +72,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
           .from('publics')
           .uploadBinary(fileName, bytes);
       imageUrl = Supabase.instance.client.storage
-          .from('publicks')
+          .from('publics')
           .getPublicUrl(fileName);
     }
 

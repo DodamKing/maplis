@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _socialLogin(String provider) async {
-    return print('$provider 구현이 필요합니다');
+    // return print('$provider 구현이 필요합니다');
     try {
       if (provider == 'kakao') {
         print('카카오 로그인 따로?');
@@ -201,46 +201,46 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      gradient: LinearGradient(
-                        colors: [Colors.purple.shade400, Colors.blue.shade400],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.purple.withOpacity(0.5),
-                          spreadRadius: 1,
-                          blurRadius: 5,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.rocket_launch, color: Colors.white),
-                      label: Text(
-                        'Use Prototype',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      onPressed: _usePrototype,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        shadowColor: Colors.transparent,
-                        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
+                  // const SizedBox(height: 24),
+                  // Container(
+                  //   decoration: BoxDecoration(
+                  //     borderRadius: BorderRadius.circular(30),
+                  //     gradient: LinearGradient(
+                  //       colors: [Colors.purple.shade400, Colors.blue.shade400],
+                  //       begin: Alignment.centerLeft,
+                  //       end: Alignment.centerRight,
+                  //     ),
+                  //     boxShadow: [
+                  //       BoxShadow(
+                  //         color: Colors.purple.withOpacity(0.5),
+                  //         spreadRadius: 1,
+                  //         blurRadius: 5,
+                  //         offset: Offset(0, 3),
+                  //       ),
+                  //     ],
+                  //   ),
+                  //   child: ElevatedButton.icon(
+                  //     icon: Icon(Icons.rocket_launch, color: Colors.white),
+                  //     label: Text(
+                  //       'Use Prototype',
+                  //       style: GoogleFonts.poppins(
+                  //         fontSize: 18,
+                  //         fontWeight: FontWeight.bold,
+                  //         color: Colors.white,
+                  //       ),
+                  //     ),
+                  //     onPressed: _usePrototype,
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: Colors.transparent,
+                  //       foregroundColor: Colors.white,
+                  //       shadowColor: Colors.transparent,
+                  //       padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
