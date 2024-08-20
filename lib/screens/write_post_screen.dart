@@ -53,7 +53,6 @@ class _WritePostScreenState extends State<WritePostScreen> {
       }
       Navigator.pop(context);
     } catch (e) {
-      print('에러 여기서 나는 거지? $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving post: $e')),
       );

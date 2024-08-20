@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:maplis_demo/widgets/user_avatar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -12,6 +13,22 @@ class ProfileScreen extends StatefulWidget {
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
+extension UserExtension on User {
+  static final Map<String, dynamic> _extraData = {};
+
+  void setExtraData(Map<String, dynamic> data) {
+    _extraData[id] = data;
+  }
+
+  dynamic getExtraData(String key) {
+    return _extraData[id]?[key];
+  }
+
+  String? get displayName => getExtraData('display_name');
+  String? get avatarUrl => getExtraData('avatar_url');
+// 필요한 추가 getter들...
+}
+
 class _ProfileScreenState extends State<ProfileScreen> {
   User? _currentUser;
 
@@ -21,42 +38,99 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
+  // Future<void> _loadUserData() async {
+  //   if (widget.isLoggedIn) {
+  //     final user = Supabase.instance.client.auth.currentUser;
+  //     if (user != null) {
+  //       final response = await Supabase.instance.client
+  //         .from('profiles').select().eq('user_id', user.id).single();
+  //
+  //       setState(() {
+  //         _currentUser = user;
+  //         _currentUser?.setExtraData(response);
+  //       });
+  //     }
+  //   }
+  // }
+
+  Future<User?> _loadUserData() async {
     if (widget.isLoggedIn) {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
-        // 필요한 경우 추가 사용자 데이터를 로드할 수 있습니다.
-        // 예: 데이터베이스에서 추가 프로필 정보 가져오기
-        setState(() {
-          _currentUser = user;
-        });
+        final response = await Supabase.instance.client
+            .from('profiles')
+            .select('display_name, avatar_url')
+            .eq('user_id', user.id)
+            .single();
+
+        user.setExtraData(response);
+        return user;
       }
     }
+    return null;
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     body: CustomScrollView(
+  //       slivers: <Widget>[
+  //         ProfileAppBar(isLoggedIn: widget.isLoggedIn, user: _currentUser),
+  //         SliverToBoxAdapter(
+  //           child: Column(
+  //             children: [
+  //               UserInfoSection(isLoggedIn: widget.isLoggedIn, user: _currentUser),
+  //               const SizedBox(height: 16),
+  //               const UserStatsSection(),
+  //               const SizedBox(height: 16),
+  //               EditProfileButton(),
+  //               const SizedBox(height: 16),
+  //               const RecentActivitiesSection(),
+  //               const SizedBox(height: 16),
+  //               const UserPostsSection(),
+  //             ],
+  //           ),
+  //         ),
+  //         if (!widget.isLoggedIn) const PrototypeModeIndicator(),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          ProfileAppBar(isLoggedIn: widget.isLoggedIn, user: _currentUser),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                UserInfoSection(isLoggedIn: widget.isLoggedIn, user: _currentUser),
-                const SizedBox(height: 16),
-                const UserStatsSection(),
-                const SizedBox(height: 16),
-                EditProfileButton(),
-                const SizedBox(height: 16),
-                const RecentActivitiesSection(),
-                const SizedBox(height: 16),
-                const UserPostsSection(),
-              ],
-            ),
-          ),
-          if (!widget.isLoggedIn) const PrototypeModeIndicator(),
-        ],
+      body: FutureBuilder<User?>(
+        future: _loadUserData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final user = snapshot.data;
+
+          return CustomScrollView(
+            slivers: <Widget>[
+              ProfileAppBar(isLoggedIn: widget.isLoggedIn, user: user),
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    UserInfoSection(isLoggedIn: widget.isLoggedIn, user: user),
+                    const SizedBox(height: 16),
+                    const UserStatsSection(),
+                    const SizedBox(height: 16),
+                    EditProfileButton(),
+                    const SizedBox(height: 16),
+                    const RecentActivitiesSection(),
+                    const SizedBox(height: 16),
+                    const UserPostsSection(),
+                  ],
+                ),
+              ),
+              if (!widget.isLoggedIn) const PrototypeModeIndicator(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -214,14 +288,14 @@ class UserInfoSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          _buildAvatar(),
+          UserAvatar(avatarUrl: user?.avatarUrl, name: user?.displayName ?? user?.email?.split('@')[0] ?? 'User', radius: 50,),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    user?.userMetadata?['display_name'] ?? 'CoolUser123',
+                    user?.displayName ?? 'CoolUser123',
                     style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold)
                 ),
                 Text(
@@ -232,47 +306,6 @@ class UserInfoSection extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAvatar() {
-    if (!isLoggedIn) {
-      return CircleAvatar(
-        radius: 50,
-        backgroundImage: NetworkImage('https://picsum.photos/seed/user/200'),
-        backgroundColor: Colors.white,
-      );
-    }
-
-    final avatarUrl = user?.userMetadata?['avatar_url'];
-    if (avatarUrl == null || avatarUrl.isEmpty) {
-      return CircleAvatar(
-        radius: 50,
-        backgroundColor: Colors.grey[300],
-        child: Text(
-          user?.userMetadata?['display_name']?.substring(0, 1).toUpperCase() ?? 'U',
-          style: TextStyle(fontSize: 32, color: Colors.white),
-        ),
-      );
-    }
-
-    return CachedNetworkImage(
-      imageUrl: avatarUrl,
-      imageBuilder: (context, imageProvider) => CircleAvatar(
-        radius: 50,
-        backgroundImage: imageProvider,
-        backgroundColor: Colors.white,
-      ),
-      placeholder: (context, url) => CircleAvatar(
-        radius: 50,
-        backgroundColor: Colors.grey[300],
-        child: CircularProgressIndicator(),
-      ),
-      errorWidget: (context, url, error) => CircleAvatar(
-        radius: 50,
-        backgroundColor: Colors.grey[300],
-        child: Icon(Icons.error, color: Colors.red),
       ),
     );
   }

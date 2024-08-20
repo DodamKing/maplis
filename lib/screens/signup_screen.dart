@@ -183,25 +183,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
 
         if (response.user != null) {
-          await Supabase.instance.client.from('profiles').upsert({
-            'id': response.user!.id,
-            'display_name': nickname,
-            'avatar_url': avatarFileNm,
-          });
+          try {
+            await Supabase.instance.client.from('profiles').upsert({
+              'user_id': response.user!.id,
+              'display_name': nickname,
+              'avatar_url': avatarFileNm,
+            });
 
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('회원가입이 완료되었습니다!\n지금 바로 로그인하여 서비스를 이용해 보세요.')),
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+            );
+          } catch (profileError) {
+            // If profile creation fails, delete the user
+            await Supabase.instance.client.auth.admin.deleteUser(response.user!.id);
+            print('Profile creation failed: $profileError');
+            throw Exception('프로필 생성 중 오류가 발생했습니다.');
+          }
+        } else {
+          throw Exception('회원가입에 실패했습니다.');
+        }
+      } on AuthException catch (e) {
+        print('SignUp Error: $e');  // Log the detailed error
+        if (e.statusCode == '422') {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('회원가입이 완료되었습니다!\n지금 바로 로그인하여 서비스를 이용해 보세요.')),
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            const SnackBar(content: Text('이미 등록된 이메일 주소입니다. 다른 이메일을 사용해 주세요.')),
           );
         } else {
-          throw Exception('Sign up failed');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.')),
+          );
         }
       } catch (e) {
+        print('SignUp Error: $e');  // Log the detailed error
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $e')),
+          const SnackBar(content: Text('회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.')),
         );
       } finally {
         setState(() {

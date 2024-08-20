@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
 import 'package:maplis_demo/services/comment_service.dart';
+import 'package:maplis_demo/widgets/user_avatar.dart';
 
 class DetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -59,27 +59,6 @@ class _DetailScreenState extends State<DetailScreen> {
     } else {
       return '방금 전';
     }
-  }
-
-  String getAvatarUrl(String author) {
-    final List<String> _backgroundColors = [
-      '1E90FF',  // 도지블루
-      '32CD32',  // 라임그린
-      'FF4500',  // 오렌지레드
-      '9932CC',  // 다크오키드
-      '008080',  // 틸
-      '8B4513',  // 새들브라운
-      '4169E1',  // 로얄블루
-      '800080',  // 퍼플
-      '2F4F4F',  // 다크슬레이트그레이
-      'DC143C',  // 크림슨
-    ];
-
-    final random = Random();
-    final colorIndex = random.nextInt(_backgroundColors.length);
-    final backgroundColor = _backgroundColors[colorIndex];
-
-    return 'https://api.dicebear.com/6.x/initials/png?seed=$author&backgroundColor=$backgroundColor';
   }
 
   @override
@@ -158,12 +137,7 @@ class _DetailScreenState extends State<DetailScreen> {
       padding: EdgeInsets.all(16),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundImage: widget.isLoggedIn && widget.post['avatar_url'] != null
-                ? NetworkImage(widget.post['avatar_url'])
-                : NetworkImage(getAvatarUrl(widget.post['author'])),
-            radius: 24,
-          ),
+          UserAvatar(avatarUrl: widget.post['avatar_url'], name: widget.post['author'], radius: 24,),
           SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -200,66 +174,69 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildPostContent() {
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.post['title'],
-            style: GoogleFonts.notoSans(
-              textStyle: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.purple.shade700,
-                fontFamilyFallback: ['Noto Sans KR'],
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.post['title'],
+              style: GoogleFonts.notoSans(
+                textStyle: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple.shade700,
+                  fontFamilyFallback: ['Noto Sans KR'],
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 16),
-          if (widget.post['image_url'] != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: Image.network(
-                widget.post['image_url'],
-                width: double.infinity,
-                fit: BoxFit.cover,
-                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                  if (loadingProgress == null) {
-                    return child;
-                  }
-                  return Container(
-                    width: double.infinity,
-                    height: 200, // 적절한 높이 설정
-                    color: Colors.grey[300],
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
+            SizedBox(height: 16),
+            if (widget.post['image_url'] != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Image.network(
+                  widget.post['image_url'],
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                    if (loadingProgress == null) {
+                      return child;
+                    }
+                    return Container(
+                      width: double.infinity,
+                      height: 200, // 적절한 높이 설정
+                      color: Colors.grey[300],
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: double.infinity,
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: Icon(Icons.error, color: Colors.red),
-                  );
-                },
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: double.infinity,
+                      height: 200,
+                      color: Colors.grey[300],
+                      child: Icon(Icons.error, color: Colors.red),
+                    );
+                  },
+                ),
+              ),
+            SizedBox(height: 16),
+            Text(
+              widget.post['content'],
+              style: GoogleFonts.notoSans(
+                fontSize: 16,
+                height: 1.5,
               ),
             ),
-          SizedBox(height: 16),
-          Text(
-            widget.post['content'],
-            style: GoogleFonts.notoSans(
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -364,7 +341,6 @@ class _DetailScreenState extends State<DetailScreen> {
                   itemBuilder: (context, index) {
                     return _buildCommentItem(snapshot.data![index], 0);
                   },
-
                 );
               }
             },
@@ -386,29 +362,20 @@ class _DetailScreenState extends State<DetailScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                backgroundImage: commentWithAuthor.authorAvatarUrl != null
-                    ? NetworkImage(commentWithAuthor.authorAvatarUrl!)
-                    : NetworkImage(getAvatarUrl(commentWithAuthor.authorName)),
-                radius: 16,
-              ),
+              UserAvatar(avatarUrl: commentWithAuthor.authorAvatarUrl, name: commentWithAuthor.authorName, radius: 16,),
               SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(commentWithAuthor.authorName, style: TextStyle(fontWeight: FontWeight.bold)),
-                        SizedBox(width: 8),
-                        Text(
-                          getSmartTimeString(commentWithAuthor.comment.createdAt.toIso8601String()),
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                    Text(commentWithAuthor.authorName, style: TextStyle(fontWeight: FontWeight.bold)),
                     SizedBox(height: 4),
                     Text(commentWithAuthor.comment.content),
+                    SizedBox(height: 4),
+                    Text(
+                      getSmartTimeString(commentWithAuthor.comment.createdAt.toIso8601String()),
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                     SizedBox(height: 4),
                     GestureDetector(
                       onTap: () => _showReplyInput(commentWithAuthor.comment),
@@ -423,15 +390,15 @@ class _DetailScreenState extends State<DetailScreen> {
             ],
           ),
         ),
-        if (commentWithAuthor.comment.replies.isNotEmpty)
-          ...commentWithAuthor.comment.replies.map((reply) => _buildCommentItem(
-              CommentWithAuthor(
-                comment: reply,
-                authorName: 'Unknown', // 여기서는 임시로 'Unknown'을 사용합니다. 실제로는 reply의 작성자 정보를 가져와야 합니다.
-                authorAvatarUrl: null,
-              ),
-              depth + 1
-          )),
+        if (commentWithAuthor.replies.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(left: 20.0),
+            child: Column(
+              children: commentWithAuthor.replies.map((reply) {
+                return _buildCommentItem(reply, depth + 1);
+              }).toList(),
+            ),
+          ),
       ],
     );
   }
@@ -471,6 +438,16 @@ class _DetailScreenState extends State<DetailScreen> {
         );
         commentController.clear();
         // 댓글이 추가되면 스트림이 자동으로 업데이트되므로 _loadComments()를 호출할 필요가 없습니다.
+
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+
+        setState(() {
+          _commentStream = _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+        });
       } catch (e) {
         print('댓글 추가에 실패했습니다: $e');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -481,6 +458,8 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _showReplyInput(Comment parentComment) {
+    final TextEditingController replyController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -493,6 +472,7 @@ class _DetailScreenState extends State<DetailScreen> {
               children: [
                 Expanded(
                   child: TextField(
+                    controller: replyController,
                     autofocus: true,
                     decoration: InputDecoration(
                       hintText: '답글을 입력하세요...',
@@ -500,30 +480,16 @@ class _DetailScreenState extends State<DetailScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    onSubmitted: (value) async {
-                      if (value.isNotEmpty) {
-                        try {
-                          await _commentService.addComment(
-                            widget.post['id'],
-                            value,
-                            parentId: parentComment.id,
-                          );
-                          Navigator.pop(context);
-                          // 댓글이 추가되면 스트림이 자동으로 업데이트되므로 _loadComments()를 호출할 필요가 없습니다.
-                        } catch (e) {
-                          print('답글 추가에 실패했습니다: $e');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('답글 추가에 실패했습니다.')),
-                          );
-                        }
-                      }
-                    },
+                    onSubmitted: (value) {
+                      _submitReply(value, parentComment.id);
+                      Navigator.pop(context);
+                    }
                   ),
                 ),
                 IconButton(
                   icon: Icon(Icons.send),
                   onPressed: () {
-                    // 답글 제출 로직
+                    _submitReply(replyController.text, parentComment.id);
                     Navigator.pop(context);
                   },
                 ),
@@ -533,5 +499,26 @@ class _DetailScreenState extends State<DetailScreen> {
         );
       },
     );
+  }
+
+  void _submitReply(String content, int parentId) async {
+    if (content.isNotEmpty) {
+      try {
+        await _commentService.addComment(
+          widget.post['id'],
+          content,
+          parentId: parentId,
+        );
+
+        setState(() {
+          _commentStream = _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+        });
+      } catch (e) {
+        print('답글 추가에 실패했습니다: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('답글 추가에 실패했습니다.')),
+        );
+      }
+    }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:maplis_demo/widgets/user_avatar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'detail_screen.dart';
 import 'write_post_screen.dart';
@@ -110,27 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ).then((_) => _onRefresh());
   }
 
-  String getAvatarUrl(String author) {
-    final List<String> _backgroundColors = [
-      '1E90FF',  // 도지블루
-      '32CD32',  // 라임그린
-      'FF4500',  // 오렌지레드
-      '9932CC',  // 다크오키드
-      '008080',  // 틸
-      '8B4513',  // 새들브라운
-      '4169E1',  // 로얄블루
-      '800080',  // 퍼플
-      '2F4F4F',  // 다크슬레이트그레이
-      'DC143C',  // 크림슨
-    ];
-
-    final random = Random();
-    final colorIndex = random.nextInt(_backgroundColors.length);
-    final backgroundColor = _backgroundColors[colorIndex];
-
-    return 'https://api.dicebear.com/6.x/initials/png?seed=$author&backgroundColor=$backgroundColor';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,14 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Row(
                             children: [
-                              CircleAvatar(
-                                backgroundImage: widget.isLoggedIn
-                                    ? (post['avatar_url'] != null
-                                      ? NetworkImage(post['avatar_url'])
-                                      : NetworkImage(getAvatarUrl(post['author'])))
-                                    : NetworkImage('https://picsum.photos/seed/${post['author']}/100'),
-                                radius: 20,
-                              ),
+                              UserAvatar(avatarUrl: post['avatar_url'], name: post['author'], radius: 20,),
                               SizedBox(width: 10),
                               Text(
                                 post['author'],
