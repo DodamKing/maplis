@@ -28,7 +28,7 @@ mixin ExitConfirmationMixin<T extends StatefulWidget> on State<T> {
                 child: Text(
                   '한 번 더 누르면 너플리스와 잠시 작별이에요!',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.eastSeaDokdo(fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: 0.2,),
+                  style: GoogleFonts.eastSeaDokdo(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: 0.2,),
                 ),
               ),
             ],
@@ -57,6 +57,7 @@ mixin ExitConfirmationMixin<T extends StatefulWidget> on State<T> {
   Future<bool> handlePopInvoked(bool didPop) async {
     final shouldExit = await showExitConfirmationDialog(didPop);
     if (shouldExit) {
+      await Future.delayed(Duration(milliseconds: 300));
       // 앱 종료 로직
       if (Platform.isAndroid) {
         SystemNavigator.pop();

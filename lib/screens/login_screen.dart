@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -27,40 +28,63 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
   }
 
   Future<void> _checkAutoLogin() async {
-    bool success = await _authService.autoLogin();
-    if (success) {
-      _navigateToMainScreen(isLoggedIn: true);
+    setState(() => _isLoading = true);
+    try {
+      bool success = await _authService.autoLogin();
+      if (success) {
+        _navigateToMainScreen(isLoggedIn: true);
+      }
+    } catch (e) {
+      print('자동 로그인 오류: $e');
+      // 오류 발생 시 사용자에게 알림을 표시할 수 있습니다.
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   Future<void> _login() async {
+    setState(() => _isLoading = true);
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-
-      if (response.user != null) {
+      bool success = await _authService.signIn(_emailController.text, _passwordController.text);
+      if (success) {
         _navigateToMainScreen(isLoggedIn: true);
-      } else
+      } else {
         throw Exception('Login failed');
+      }
     } catch (e) {
       print('Login Error: $e');
-      String msg = 'Login error occurred. Please try again later.';
-      if (e.toString().contains('400'))
-        msg = 'Incorrect email or password. Please try again.';
+
+      String msg = '로그인 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.';
+
+      if (e is AuthException) {
+        msg = '로그인 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.';
+        if (e.toString().contains('400')) msg = '이메일 주소나 비밀번호가 올바르지 않아요. 다시 한 번 확인해 주세요.';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
   Future<void> _biometricLogin() async {
-    bool success = await _authService.autoLogin();
-    if (success) {
-      _navigateToMainScreen(isLoggedIn: true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Biometric login failed. Please try again or use email/password.')),
-      );
+    try {
+      bool success = await _authService.autoLogin();
+      if (success) {
+        _navigateToMainScreen(isLoggedIn: true);
+      } else {
+        throw Exception('Biometric login failed');
+      }
+    } catch (e) {
+      String errorMessage;
+      if (e.toString().contains('not available')) {
+        errorMessage = '이 기기에서는 생체 인증을 사용할 수 없습니다.';
+      } else if (e.toString().contains('not enrolled')) {
+        errorMessage = '생체 인증이 설정되어 있지 않습니다. 기기 설정에서 생체 인증을 등록해주세요.';
+      } else if (e.toString().contains('failed')) {
+        errorMessage = '생체 인증에 실패했습니다. 다시 시도하거나 이메일/비밀번호로 로그인해주세요.';
+      } else {
+        errorMessage = '생체 인증 중 오류가 발생했습니다. 다시 시도해주세요.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
     }
   }
 
