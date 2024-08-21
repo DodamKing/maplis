@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/home_screen.dart';
 import 'screens/community_screen.dart';
 import 'screens/profile_screen.dart';
+import 'widgets/exit_confirmation_mixin.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,8 @@ class MyApp extends StatelessWidget {
         ),
         cardTheme: CardTheme(
           elevation: 5,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           color: Colors.white.withOpacity(0.9),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -66,13 +68,14 @@ class MyApp extends StatelessWidget {
 
 class MainScreen extends StatefulWidget {
   final bool isLoggedIn;
+
   const MainScreen({Key? key, required this.isLoggedIn}) : super(key: key);
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with ExitConfirmationMixin {
   int _selectedIndex = 0;
   late List<Widget> _screens;
 
@@ -88,30 +91,47 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.purple.shade300, Colors.blue.shade200],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: _screens[_selectedIndex],
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
-            NavigationDestination(icon: Icon(Icons.explore_rounded), label: 'Explore'),
-            NavigationDestination(icon: Icon(Icons.person_rounded), label: 'Profile'),
-          ],
-          elevation: 0,
-          backgroundColor: Colors.white.withOpacity(0.9),
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        ),
-      ),
-    );
+    return PopScope(
+        canPop: false,
+        onPopInvoked: handlePopInvoked,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.purple.shade300, Colors.blue.shade200],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.purple.shade300, Colors.blue.shade200],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: _screens[_selectedIndex],
+              bottomNavigationBar: NavigationBar(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (index) =>
+                    setState(() => _selectedIndex = index),
+                destinations: const [
+                  NavigationDestination(
+                      icon: Icon(Icons.home_rounded), label: 'Home'),
+                  NavigationDestination(
+                      icon: Icon(Icons.explore_rounded), label: 'Explore'),
+                  NavigationDestination(
+                      icon: Icon(Icons.person_rounded), label: 'Profile'),
+                ],
+                elevation: 0,
+                backgroundColor: Colors.white.withOpacity(0.9),
+                labelBehavior:
+                    NavigationDestinationLabelBehavior.onlyShowSelected,
+              ),
+            ),
+          ),
+        ));
   }
 }

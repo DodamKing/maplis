@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:maplis_demo/widgets/user_avatar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isLoggedIn;
@@ -30,6 +30,7 @@ extension UserExtension on User {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthService _authService = AuthService();
   User? _currentUser;
 
   @override
@@ -37,21 +38,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadUserData();
   }
-
-  // Future<void> _loadUserData() async {
-  //   if (widget.isLoggedIn) {
-  //     final user = Supabase.instance.client.auth.currentUser;
-  //     if (user != null) {
-  //       final response = await Supabase.instance.client
-  //         .from('profiles').select().eq('user_id', user.id).single();
-  //
-  //       setState(() {
-  //         _currentUser = user;
-  //         _currentUser?.setExtraData(response);
-  //       });
-  //     }
-  //   }
-  // }
 
   Future<User?> _loadUserData() async {
     if (widget.isLoggedIn) {
@@ -70,33 +56,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null;
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     body: CustomScrollView(
-  //       slivers: <Widget>[
-  //         ProfileAppBar(isLoggedIn: widget.isLoggedIn, user: _currentUser),
-  //         SliverToBoxAdapter(
-  //           child: Column(
-  //             children: [
-  //               UserInfoSection(isLoggedIn: widget.isLoggedIn, user: _currentUser),
-  //               const SizedBox(height: 16),
-  //               const UserStatsSection(),
-  //               const SizedBox(height: 16),
-  //               EditProfileButton(),
-  //               const SizedBox(height: 16),
-  //               const RecentActivitiesSection(),
-  //               const SizedBox(height: 16),
-  //               const UserPostsSection(),
-  //             ],
-  //           ),
-  //         ),
-  //         if (!widget.isLoggedIn) const PrototypeModeIndicator(),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           return CustomScrollView(
             slivers: <Widget>[
-              ProfileAppBar(isLoggedIn: widget.isLoggedIn, user: user),
+              ProfileAppBar(isLoggedIn: widget.isLoggedIn, user: user, authService: _authService,),
               SliverToBoxAdapter(
                 child: Column(
                   children: [
@@ -139,8 +98,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class ProfileAppBar extends StatelessWidget {
   final bool isLoggedIn;
   final User? user;
+  final AuthService authService;
 
-  const ProfileAppBar({Key? key, required this.isLoggedIn, this.user}) : super(key: key);
+  const ProfileAppBar({Key? key, required this.isLoggedIn, this.user, required this.authService}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +172,8 @@ class ProfileAppBar extends StatelessWidget {
                   leading: Icon(Icons.logout, color: Colors.red),
                   title: Text('Logout', style: GoogleFonts.poppins()),
                   onTap: () async {
-                    await Supabase.instance.client.auth.signOut();
+                    // await Supabase.instance.client.auth.signOut();
+                    await authService.signOut();
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => LoginScreen()),
                           (route) => false,
