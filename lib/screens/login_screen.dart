@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -24,7 +25,20 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
   @override
   void initState() {
     super.initState();
+    _setupBackButtonHandler();
     _checkAutoLogin();
+  }
+
+  void _setupBackButtonHandler() {
+    const platform = MethodChannel('com.example.maplis_demo/backButton');
+    platform.setMethodCallHandler((call) async {
+      if (call.method == "onBackPressed") {
+        final shouldExit = await handlePopInvoked(false);
+        if (shouldExit) {
+          await platform.invokeMethod('handleBackPress');
+        }
+      }
+    });
   }
 
   Future<void> _checkAutoLogin() async {
@@ -33,10 +47,17 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
       bool success = await _authService.autoLogin();
       if (success) {
         _navigateToMainScreen(isLoggedIn: true);
+      } else {
+        // 자동 로그인 실패 시 사용자에게 알림
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('자동 로그인에 실패했습니다. 다시 로그인해 주세요.')),
+        );
       }
     } catch (e) {
-      print('자동 로그인 오류: $e');
-      // 오류 발생 시 사용자에게 알림을 표시할 수 있습니다.
+      print('자동 로그인 중 오류 발생: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('로그인 중 오류가 발생했습니다. 다시 시도해 주세요.')),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -45,8 +66,10 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
   Future<void> _login() async {
     setState(() => _isLoading = true);
     try {
-      bool success = await _authService.signIn(_emailController.text, _passwordController.text);
+      // bool success = await _authService.signIn(_emailController.text, _passwordController.text);
+      bool success = await _authService.signInWithEmailAndPassword(_emailController.text, _passwordController.text);
       if (success) {
+        // await _authService.setupBiometrics(context);
         _navigateToMainScreen(isLoggedIn: true);
       } else {
         throw Exception('Login failed');
