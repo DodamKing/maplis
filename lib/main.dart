@@ -7,6 +7,7 @@ import 'screens/home_screen.dart';
 import 'screens/community_screen.dart';
 import 'screens/profile_screen.dart';
 import 'widgets/exit_confirmation_mixin.dart';
+import 'screens/authentication_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +62,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoginScreen(),
+      // home: const LoginScreen(),
+      home: const AuthenticationWrapper(),
     );
   }
 }

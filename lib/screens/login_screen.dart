@@ -25,8 +25,8 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
   @override
   void initState() {
     super.initState();
-    _setupBackButtonHandler();
-    _checkAutoLogin();
+    // _setupBackButtonHandler();
+    // _checkAutoLogin();
   }
 
   void _setupBackButtonHandler() {

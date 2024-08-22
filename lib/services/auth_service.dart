@@ -172,13 +172,13 @@ class AuthService {
 
   Future<bool> _authenticateWithBiometrics() async {
     try {
-      List<BiometricType> availableBiometrics = await _localAuth.getAvailableBiometrics();
-      print("사용 가능한 생체 인증 방식: $availableBiometrics");
+      // List<BiometricType> availableBiometrics = await _localAuth.getAvailableBiometrics();
+      // print("사용 가능한 생체 인증 방식: $availableBiometrics");
 
-      if (!availableBiometrics.contains(BiometricType.fingerprint)) {
-        print("이 기기에서는 지문 인증을 사용할 수 없습니다.");
-        return false;
-      }
+      // if (!availableBiometrics.contains(BiometricType.fingerprint)) {
+      //   print("이 기기에서는 지문 인증을 사용할 수 없습니다.");
+      //   return false;
+      // }
 
       print("지문 인증 시도 중...");
       bool didAuthenticate = await _localAuth.authenticate(
@@ -201,6 +201,7 @@ class AuthService {
           stickyAuth: true,
           biometricOnly: true,
           sensitiveTransaction: true,
+          useErrorDialogs: true,
         ),
       );
 
