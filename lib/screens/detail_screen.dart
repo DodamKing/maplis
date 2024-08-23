@@ -21,11 +21,12 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   bool isLiked = false;
   int likeCount = 0;
-  List<Comment> comments = [];
+  // List<Comment> comments = [];
   TextEditingController commentController = TextEditingController();
   ScrollController _scrollController = ScrollController();
   final CommentService _commentService = CommentService();
   late Stream<List<CommentWithAuthor>> _commentStream;
+  int totalCommentCount = 0;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    commentController.dispose();
     super.dispose();
   }
 
@@ -59,6 +61,23 @@ class _DetailScreenState extends State<DetailScreen> {
     } else {
       return '방금 전';
     }
+  }
+
+  int _calculateTotalCommentCount(List<CommentWithAuthor> comments) {
+    int count = 0;
+    for (var comment in comments) {
+      count++; // 부모 댓글 카운트
+      count += _countReplies(comment.replies); // 답글 카운트
+    }
+    return count;
+  }
+
+  int _countReplies(List<CommentWithAuthor> replies) {
+    int count = replies.length;
+    for (var reply in replies) {
+      count += _countReplies(reply.replies);
+    }
+    return count;
   }
 
   @override
@@ -242,49 +261,57 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildPersistentInteractionBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildInteractionButton(
-            icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-            label: '좋아요 $likeCount',
-            color: isLiked ? Colors.purpleAccent : Colors.grey,
-            onPressed: () {
-              setState(() {
-                isLiked = !isLiked;
-                likeCount += isLiked ? 1 : -1;
-              });
-            },
+    return StreamBuilder<List<CommentWithAuthor>>(
+      stream: _commentStream,
+      builder: (context, snapshot) {
+        int totalCommentCount = 0;
+        if (snapshot.hasData) {
+          totalCommentCount = _calculateTotalCommentCount(snapshot.data!);
+        }
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Colors.grey.shade300)),
           ),
-          _buildInteractionButton(
-            icon: Icons.chat_bubble_outline,
-            label: '댓글 ${comments.length}',
-            color: Colors.grey,
-            onPressed: () {
-              // 댓글 섹션으로 스크롤
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent,
-                duration: Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildInteractionButton(
+                icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                label: '좋아요 $likeCount',
+                color: isLiked ? Colors.purpleAccent : Colors.grey,
+                onPressed: () {
+                  setState(() {
+                    isLiked = !isLiked;
+                    likeCount += isLiked ? 1 : -1;
+                  });
+                },
+              ),
+              _buildInteractionButton(
+                icon: Icons.chat_bubble_outline,
+                label: '댓글 $totalCommentCount',
+                color: Colors.grey,
+                onPressed: () {
+                  _scrollController.animateTo(
+                    _scrollController.position.maxScrollExtent,
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                },
+              ),
+              _buildInteractionButton(
+                icon: Icons.bookmark_border,
+                label: '저장',
+                color: Colors.grey,
+                onPressed: () {
+                  // 저장 기능
+                },
+              ),
+            ],
           ),
-          _buildInteractionButton(
-            icon: Icons.bookmark_border,
-            label: '저장',
-            color: Colors.grey,
-            onPressed: () {
-              // 저장 기능
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -315,13 +342,30 @@ class _DetailScreenState extends State<DetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '댓글',
-            style: GoogleFonts.roboto(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.purple.shade700,
-            ),
+          // Text(
+          //   '댓글 ($totalCommentCount)',
+          //   style: GoogleFonts.roboto(
+          //     fontSize: 18,
+          //     fontWeight: FontWeight.bold,
+          //     color: Colors.purple.shade700,
+          //   ),
+          // ),
+          StreamBuilder<List<CommentWithAuthor>>(
+            stream: _commentStream,
+            builder: (context, snapshot) {
+              int totalCommentCount = 0;
+              if (snapshot.hasData) {
+                totalCommentCount = _calculateTotalCommentCount(snapshot.data!);
+              }
+              return Text(
+                '댓글 ($totalCommentCount)',
+                style: GoogleFonts.roboto(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple.shade700,
+                ),
+              );
+            },
           ),
           SizedBox(height: 16),
           StreamBuilder<List<CommentWithAuthor>>(
@@ -332,7 +376,7 @@ class _DetailScreenState extends State<DetailScreen> {
               } else if (snapshot.hasError) {
                 return Text('Error: ${snapshot.error}');
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Text('No comments yet.');
+                return Text('아직 댓글이 없습니다.');
               } else {
                 return ListView.builder(
                   shrinkWrap: true,

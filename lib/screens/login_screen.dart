@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
   @override
   void initState() {
     super.initState();
-    // _setupBackButtonHandler();
+    _setupBackButtonHandler();
     // _checkAutoLogin();
   }
 
@@ -129,10 +129,6 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
         SnackBar(content: Text('Social login failed. Please try again.')),
       );
     }
-  }
-
-  void _usePrototype() {
-    _navigateToMainScreen(isLoggedIn: false);
   }
 
   void _navigateToMainScreen({required bool isLoggedIn}) {
@@ -308,46 +304,6 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
-                        // const SizedBox(height: 24),
-                        // Container(
-                        //   decoration: BoxDecoration(
-                        //     borderRadius: BorderRadius.circular(30),
-                        //     gradient: LinearGradient(
-                        //       colors: [Colors.purple.shade400, Colors.blue.shade400],
-                        //       begin: Alignment.centerLeft,
-                        //       end: Alignment.centerRight,
-                        //     ),
-                        //     boxShadow: [
-                        //       BoxShadow(
-                        //         color: Colors.purple.withOpacity(0.5),
-                        //         spreadRadius: 1,
-                        //         blurRadius: 5,
-                        //         offset: Offset(0, 3),
-                        //       ),
-                        //     ],
-                        //   ),
-                        //   child: ElevatedButton.icon(
-                        //     icon: Icon(Icons.rocket_launch, color: Colors.white),
-                        //     label: Text(
-                        //       'Use Prototype',
-                        //       style: GoogleFonts.poppins(
-                        //         fontSize: 18,
-                        //         fontWeight: FontWeight.bold,
-                        //         color: Colors.white,
-                        //       ),
-                        //     ),
-                        //     onPressed: _usePrototype,
-                        //     style: ElevatedButton.styleFrom(
-                        //       backgroundColor: Colors.transparent,
-                        //       foregroundColor: Colors.white,
-                        //       shadowColor: Colors.transparent,
-                        //       padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        //       shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(12),
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),

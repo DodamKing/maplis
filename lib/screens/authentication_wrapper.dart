@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../main.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthenticationWrapper extends StatefulWidget {
   const AuthenticationWrapper({Key? key}) : super(key: key);
