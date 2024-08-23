@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:maplis_demo/services/comment_service.dart';
 import 'package:maplis_demo/widgets/user_avatar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:maplis_demo/services/like_service.dart';
 
 class DetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -21,19 +23,26 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   bool isLiked = false;
   int likeCount = 0;
-  // List<Comment> comments = [];
   TextEditingController commentController = TextEditingController();
   ScrollController _scrollController = ScrollController();
   final CommentService _commentService = CommentService();
   late Stream<List<CommentWithAuthor>> _commentStream;
-  int totalCommentCount = 0;
+
+  final SupabaseLikeService _likeService = SupabaseLikeService();
+  late Stream<bool> _isLikedStream;
+  late Stream<int> _likeCountStream;
 
   @override
   void initState() {
     super.initState();
-    likeCount = widget.post['likes'] ?? 0;
-    isLiked = widget.post['isLiked'] ?? false;
-    _commentStream = _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+
+    _commentStream =
+        _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+
+    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    _isLikedStream =
+        _likeService.isLikedByUser(widget.post['id'], currentUserId);
+    _likeCountStream = _likeService.getLikeCount(widget.post['id']);
   }
 
   @override
@@ -102,7 +111,8 @@ class _DetailScreenState extends State<DetailScreen> {
                     SliverToBoxAdapter(
                       child: Card(
                         margin: EdgeInsets.all(16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                         child: Column(
                           children: [
                             _buildPostHeader(),
@@ -136,7 +146,10 @@ class _DetailScreenState extends State<DetailScreen> {
           Expanded(
             child: Text(
               widget.post['title'],
-              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -156,7 +169,11 @@ class _DetailScreenState extends State<DetailScreen> {
       padding: EdgeInsets.all(16),
       child: Row(
         children: [
-          UserAvatar(avatarUrl: widget.post['avatar_url'], name: widget.post['author'], radius: 24,),
+          UserAvatar(
+            avatarUrl: widget.post['avatar_url'],
+            name: widget.post['author'],
+            radius: 24,
+          ),
           SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -180,10 +197,13 @@ class _DetailScreenState extends State<DetailScreen> {
             onPressed: () {
               // 팔로우 기능
             },
-            child: Text('팔로우', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text('팔로우',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.purple.shade400,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
           ),
@@ -219,7 +239,8 @@ class _DetailScreenState extends State<DetailScreen> {
                   widget.post['image_url'],
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  loadingBuilder: (BuildContext context, Widget child,
+                      ImageChunkEvent? loadingProgress) {
                     if (loadingProgress == null) {
                       return child;
                     }
@@ -230,7 +251,8 @@ class _DetailScreenState extends State<DetailScreen> {
                       child: Center(
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
                               : null,
                         ),
                       ),
@@ -263,59 +285,78 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget _buildPersistentInteractionBar() {
     return StreamBuilder<List<CommentWithAuthor>>(
       stream: _commentStream,
-      builder: (context, snapshot) {
-        int totalCommentCount = 0;
-        if (snapshot.hasData) {
-          totalCommentCount = _calculateTotalCommentCount(snapshot.data!);
-        }
-        return Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Colors.grey.shade300)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildInteractionButton(
-                icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                label: '좋아요 $likeCount',
-                color: isLiked ? Colors.purpleAccent : Colors.grey,
-                onPressed: () {
-                  setState(() {
-                    isLiked = !isLiked;
-                    likeCount += isLiked ? 1 : -1;
-                  });
-                },
-              ),
-              _buildInteractionButton(
-                icon: Icons.chat_bubble_outline,
-                label: '댓글 $totalCommentCount',
-                color: Colors.grey,
-                onPressed: () {
-                  _scrollController.animateTo(
-                    _scrollController.position.maxScrollExtent,
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                  );
-                },
-              ),
-              _buildInteractionButton(
-                icon: Icons.bookmark_border,
-                label: '저장',
-                color: Colors.grey,
-                onPressed: () {
-                  // 저장 기능
-                },
-              ),
-            ],
-          ),
+      builder: (context, commentSnapshot) {
+        int totalCommentCount = commentSnapshot.hasData
+            ? _calculateTotalCommentCount(commentSnapshot.data!)
+            : 0;
+
+        return StreamBuilder<bool>(
+          stream: _isLikedStream,
+          builder: (context, isLikedSnapshot) {
+            return StreamBuilder<int>(
+              stream: _likeCountStream,
+              builder: (context, likeCountSnapshot) {
+                bool isLiked = isLikedSnapshot.data ?? false;
+                int likeCount = likeCountSnapshot.data ?? 0;
+
+                return Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border:
+                        Border(top: BorderSide(color: Colors.grey.shade300)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildInteractionButton(
+                        key: ValueKey('like_button_$isLiked'),
+                        icon:
+                            isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                        label: '좋아요 $likeCount',
+                        color: isLiked ? Colors.purpleAccent : Colors.grey,
+                        onPressed: () {
+                          final currentUserId =
+                              Supabase.instance.client.auth.currentUser!.id;
+                          final postId = widget.post['id'] as int;
+                          _likeService.toggleLike(postId, currentUserId);
+                        },
+                      ),
+                      _buildInteractionButton(
+                        key: ValueKey('comment_button_$totalCommentCount'),
+                        icon: Icons.chat_bubble_outline,
+                        label: '댓글 $totalCommentCount',
+                        color: Colors.grey,
+                        onPressed: () {
+                          _scrollController.animateTo(
+                            _scrollController.position.maxScrollExtent,
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          );
+                        },
+                      ),
+                      _buildInteractionButton(
+                        key: ValueKey('save_button'),
+                        icon: Icons.bookmark_border,
+                        label: '저장',
+                        color: Colors.grey,
+                        onPressed: () {
+                          // 저장 기능
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildInteractionButton({
+    required Key key,
     required IconData icon,
     required String label,
     required VoidCallback onPressed,
@@ -397,6 +438,10 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildCommentItem(CommentWithAuthor commentWithAuthor, int depth) {
+    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    final isAuthor = commentWithAuthor.comment.authorId == currentUserId;
+    final isDeleted = commentWithAuthor.comment.isDeleted ?? false;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -406,28 +451,64 @@ class _DetailScreenState extends State<DetailScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              UserAvatar(avatarUrl: commentWithAuthor.authorAvatarUrl, name: commentWithAuthor.authorName, radius: 16,),
+              if (!isDeleted)
+                UserAvatar(
+                  avatarUrl: commentWithAuthor.authorAvatarUrl,
+                  name: commentWithAuthor.authorName,
+                  radius: 16,
+                ),
               SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(commentWithAuthor.authorName, style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 4),
-                    Text(commentWithAuthor.comment.content),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isDeleted ? '삭제된 댓글' : commentWithAuthor.authorName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDeleted ? Colors.grey : Colors.black,
+                          ),
+                        ),
+                        if (isAuthor && !isDeleted)
+                          IconButton(
+                            icon: Icon(Icons.delete, size: 18),
+                            onPressed: () {
+                              showDeleteConfirmationDialog(
+                                context,
+                                () => _deleteComment(commentWithAuthor.comment.id),
+                              );
+                            },
+                            color: Colors.red,
+                          ),
+                      ],
+                    ),
                     SizedBox(height: 4),
                     Text(
-                      getSmartTimeString(commentWithAuthor.comment.createdAt.toIso8601String()),
+                      commentWithAuthor.comment.content,
+                      style: TextStyle(
+                        color: isDeleted ? Colors.grey : Colors.black,
+                        fontStyle:
+                            isDeleted ? FontStyle.italic : FontStyle.normal,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      getSmartTimeString(commentWithAuthor.comment.createdAt
+                          .toIso8601String()),
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () => _showReplyInput(commentWithAuthor.comment),
-                      child: Text(
-                        '답글 달기',
-                        style: TextStyle(color: Colors.blue, fontSize: 12),
+                    if (!isDeleted)
+                      GestureDetector(
+                        onTap: () => _showReplyInput(commentWithAuthor.comment),
+                        child: Text(
+                          '답글 달기',
+                          style: TextStyle(color: Colors.blue, fontSize: 12),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -490,7 +571,8 @@ class _DetailScreenState extends State<DetailScreen> {
         );
 
         setState(() {
-          _commentStream = _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+          _commentStream =
+              _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
         });
       } catch (e) {
         print('댓글 추가에 실패했습니다: $e');
@@ -509,26 +591,26 @@ class _DetailScreenState extends State<DetailScreen> {
       isScrollControlled: true,
       builder: (BuildContext context) {
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Container(
             padding: EdgeInsets.all(16),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: replyController,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: '답글을 입력하세요...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
+                      controller: replyController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: '답글을 입력하세요...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                    ),
-                    onSubmitted: (value) {
-                      _submitReply(value, parentComment.id);
-                      Navigator.pop(context);
-                    }
-                  ),
+                      onSubmitted: (value) {
+                        _submitReply(value, parentComment.id);
+                        Navigator.pop(context);
+                      }),
                 ),
                 IconButton(
                   icon: Icon(Icons.send),
@@ -555,7 +637,8 @@ class _DetailScreenState extends State<DetailScreen> {
         );
 
         setState(() {
-          _commentStream = _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+          _commentStream =
+              _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
         });
       } catch (e) {
         print('답글 추가에 실패했습니다: $e');
@@ -565,4 +648,105 @@ class _DetailScreenState extends State<DetailScreen> {
       }
     }
   }
+
+  void _deleteComment(int commentId) async {
+    try {
+      await _commentService.softDeleteComment(commentId);
+      // 댓글 삭제 후 댓글 목록 새로고침
+      setState(() {
+        _commentStream =
+            _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('댓글이 삭제되었습니다.')),
+      );
+    } catch (e) {
+      print('댓글 삭제 중 오류 발생: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('댓글 삭제 중 오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  void showDeleteConfirmationDialog(BuildContext context, Function onConfirm) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.purple.shade100, Colors.blue.shade100],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 64,
+              ),
+              SizedBox(height: 20),
+              Text(
+                '댓글을 삭제하시겠습니까?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                '이 작업은 되돌릴 수 없습니다.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+              SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    child: Text('취소'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white, backgroundColor: Colors.grey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  ElevatedButton(
+                    child: Text('삭제'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white, backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onConfirm();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 }

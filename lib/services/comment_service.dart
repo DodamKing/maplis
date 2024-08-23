@@ -8,6 +8,7 @@ class Comment {
   final DateTime createdAt;
   final int? parentId;
   List<Comment> replies;
+  final bool isDeleted;
 
   Comment({
     required this.id,
@@ -16,7 +17,8 @@ class Comment {
     required this.content,
     required this.createdAt,
     this.parentId,
-    this.replies = const [],
+    this.replies = const [], 
+    this.isDeleted = false,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class Comment {
       content: json['content'],
       createdAt: DateTime.parse(json['created_at']),
       parentId: json['parent_id'],
+      isDeleted: json['is_deleted'] ?? false,
     );
   }
 }
@@ -124,5 +127,32 @@ class CommentService {
           List<Comment> comments = events.map((event) => Comment.fromJson(event)).toList();
           return await _organizeCommentsWithAuthor(comments);
         });
+  }
+
+  Future<void> deleteComment(int commentId) async {
+    try {
+      await _supabase
+          .from('comments')
+          .delete()
+          .eq('id', commentId);
+    } catch (e) {
+      print('Error deleting comment: $e');
+      throw e;
+    }
+  }
+
+  Future<void> softDeleteComment(int commentId) async {
+    try {
+      await _supabase
+          .from('comments')
+          .update({
+            'is_deleted': true,
+            'content': '[삭제된 댓글입니다]'
+          })
+          .eq('id', commentId);
+    } catch (e) {
+      print('Error soft deleting comment: $e');
+      throw e;
+    }
   }
 }
