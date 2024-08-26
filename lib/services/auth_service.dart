@@ -118,45 +118,39 @@ class AuthService {
           await _localAuth.getAvailableBiometrics();
       print("사용 가능한 생체 인증 방식: $availableBiometrics");
 
-      bool isFingerprint = false;
-
-      if (Platform.isAndroid) {
-        // Android의 경우
-        isFingerprint =
-            availableBiometrics.contains(BiometricType.fingerprint) ||
-                (availableBiometrics.contains(BiometricType.strong) &&
-                    await _localAuth.isDeviceSupported());
-      } else if (Platform.isIOS) {
-        // iOS의 경우
-        isFingerprint = availableBiometrics.contains(BiometricType.fingerprint);
+      String getBiometricHint(List<BiometricType> types) {
+        if (types.contains(BiometricType.face)) {
+          return '얼굴을 카메라에 비춰주세요';
+        } else if (types.contains(BiometricType.fingerprint)) {
+          return '지문 센서에 손가락을 대주세요';
+        } else if (types.contains(BiometricType.iris)) {
+          return '홍채를 카메라에 비춰주세요';
+        } else {
+          return '생체 인증을 시작합니다';
+        }
       }
 
-      if (!isFingerprint) {
-        print("이 기기에서는 지문 인증을 사용할 수 없습니다.");
-        return false;
-      }
+      String authReason = '생체 인증을 사용하여 로그인';
+      // String biometricHint = '생체 인증을 시작합니다';
+      String biometricHint = await getBiometricHint(availableBiometrics);
 
-      print("지문 인증 시도 중...");
       bool didAuthenticate = await _localAuth.authenticate(
-        localizedReason:
-            Platform.isIOS ? '계속하려면 Touch ID를 사용하세요' : '지문을 인식하여 로그인해주세요',
-        authMessages: Platform.isAndroid
-            ? <AndroidAuthMessages>[
-                AndroidAuthMessages(
-                  signInTitle: '지문 인증',
-                  cancelButton: '취소',
-                  biometricHint: '센서에 손가락을 대세요',
-                  biometricNotRecognized: '지문이 인식되지 않았습니다',
-                  biometricSuccess: '지문이 인식되었습니다',
-                  biometricRequiredTitle: '지문 인증이 필요합니다',
-                ),
-              ]
-            : [],
+        localizedReason: authReason,
+        authMessages: [
+          AndroidAuthMessages(
+            signInTitle: '생체 인증',
+            cancelButton: '취소',
+            biometricHint: biometricHint,
+            biometricNotRecognized: '인식할 수 없습니다',
+            biometricSuccess: '인증 성공',
+            biometricRequiredTitle: '생체 인증이 필요',
+          ),
+        ],
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: true,
           sensitiveTransaction: true,
-          useErrorDialogs: true,
+          useErrorDialogs: false,
         ),
       );
 

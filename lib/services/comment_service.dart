@@ -130,14 +130,29 @@ class CommentService {
   }
 
   Future<void> deleteComment(int commentId) async {
-    try {
-      await _supabase
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) throw Exception('User must be logged in to delete a comment');
+
+    // 1. 해당 댓글의 자식 댓글 수 확인
+    final childComments = await Supabase.instance.client
+        .from('comments')
+        .select('id')
+        .eq('parent_id', commentId);
+
+    if (childComments.length == 0) {
+      // 자식 댓글이 없는 경우: 완전히 삭제
+      await Supabase.instance.client
           .from('comments')
           .delete()
-          .eq('id', commentId);
-    } catch (e) {
-      print('Error deleting comment: $e');
-      throw e;
+          .eq('id', commentId)
+          .eq('author_id', user.id);
+    } else {
+      // 자식 댓글이 있는 경우: 소프트 삭제
+      await Supabase.instance.client
+          .from('comments')
+          .update({'is_deleted': true})
+          .eq('id', commentId)
+          .eq('author_id', user.id);
     }
   }
 
@@ -154,5 +169,16 @@ class CommentService {
       print('Error soft deleting comment: $e');
       throw e;
     }
+  }
+
+  Future<void> updateComment(int commentId, String newContent) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) throw Exception('User must be logged in to update a comment');
+
+    await Supabase.instance.client
+        .from('comments')
+        .update({'content': newContent})
+        .eq('id', commentId)
+        .eq('author_id', user.id);
   }
 }

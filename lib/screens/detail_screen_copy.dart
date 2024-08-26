@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:maplis_demo/services/comment_service.dart';
@@ -24,8 +21,8 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  // bool isLiked = false;
-  // int likeCount = 0;
+  bool isLiked = false;
+  int likeCount = 0;
   TextEditingController commentController = TextEditingController();
   ScrollController _scrollController = ScrollController();
   final CommentService _commentService = CommentService();
@@ -35,42 +32,23 @@ class _DetailScreenState extends State<DetailScreen> {
   late Stream<bool> _isLikedStream;
   late Stream<int> _likeCountStream;
 
-  late StreamSubscription<bool> _keyboardVisibilitySubscription;
-  bool _isKeyboardVisible = false;
-
   @override
   void initState() {
     super.initState();
 
     _commentStream =
         _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
-    _refreshLikeState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final keyboardVisibilityController = KeyboardVisibilityController();
-      _keyboardVisibilitySubscription = keyboardVisibilityController.onChange.listen((bool visible) {
-        if (!mounted) return;
-        setState(() {
-          _isKeyboardVisible = visible;
-        });
-      });
-    });
-  }
-
-  void _refreshLikeState() {
-    setState(() {
-      final currentUserId = Supabase.instance.client.auth.currentUser!.id;
-      final postId = widget.post['id'] as int;
-      _isLikedStream = _likeService.isLikedByUser(postId, currentUserId);
-      _likeCountStream = _likeService.getLikeCount(postId);
-    });
+    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    _isLikedStream =
+        _likeService.isLikedByUser(widget.post['id'], currentUserId);
+    _likeCountStream = _likeService.getLikeCount(widget.post['id']);
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     commentController.dispose();
-    _keyboardVisibilitySubscription.cancel();
     super.dispose();
   }
 
@@ -139,36 +117,15 @@ class _DetailScreenState extends State<DetailScreen> {
                           children: [
                             _buildPostHeader(),
                             _buildPostContent(),
+                            _buildCommentSection(),
                           ],
                         ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          '댓글',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Card(
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                        child: _buildCommentSection(),
                       ),
                     ),
                   ],
                 ),
               ),
-              _buildCommentInput(),
-              if (!_isKeyboardVisible) _buildPersistentInteractionBar(),
+              _buildPersistentInteractionBar(),
             ],
           ),
         ),
@@ -295,7 +252,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
                               ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
+                              loadingProgress.expectedTotalBytes!
                               : null,
                         ),
                       ),
@@ -347,7 +304,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border:
-                        Border(top: BorderSide(color: Colors.grey.shade300)),
+                    Border(top: BorderSide(color: Colors.grey.shade300)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -355,15 +312,14 @@ class _DetailScreenState extends State<DetailScreen> {
                       _buildInteractionButton(
                         key: ValueKey('like_button_$isLiked'),
                         icon:
-                            isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                        label: ' $likeCount',
+                        isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                        label: '좋아요 $likeCount',
                         color: isLiked ? Colors.purpleAccent : Colors.grey,
-                        onPressed: () async {
+                        onPressed: () {
                           final currentUserId =
                               Supabase.instance.client.auth.currentUser!.id;
                           final postId = widget.post['id'] as int;
-                          await _likeService.toggleLike(postId, currentUserId);
-                          _refreshLikeState();
+                          _likeService.toggleLike(postId, currentUserId);
                         },
                       ),
                       _buildInteractionButton(
@@ -406,271 +362,201 @@ class _DetailScreenState extends State<DetailScreen> {
     required VoidCallback onPressed,
     required Color color,
   }) {
-    return Container(
-      width: 100, // 고정 너비 설정
-      child: InkWell(
-        onTap: onPressed,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min, // 내용물에 맞춰 크기 조정
-            children: [
-              Icon(icon, color: color),
-              SizedBox(width: 4),
-              Expanded( // Expanded를 사용하여 남은 공간을 차지하도록 함
-                child: Text(
-                  label,
-                  style: TextStyle(color: color),
-                  overflow: TextOverflow.ellipsis, // 텍스트가 너무 길 경우 ...으로 표시
-                ),
-              ),
-            ],
-          ),
+    return InkWell(
+      onTap: onPressed,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            SizedBox(width: 4),
+            Text(label, style: TextStyle(color: color)),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildCommentSection() {
-    return StreamBuilder<List<CommentWithAuthor>>(
-      stream: _commentStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('아직 댓글이 없습니다.'),
-          );
-        } else {
-          List<CommentWithAuthor> parentComments = snapshot.data!
-              .where((comment) => comment.comment.parentId == null)
-              .toList();
-          return ListView.separated(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: parentComments.length,
-            separatorBuilder: (context, index) => Divider(height: 1),
-            itemBuilder: (context, index) {
-              return _buildCommentItem(parentComments[index]);
-            },
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildCommentItem(CommentWithAuthor commentWithAuthor) {
-    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
-    final isAuthor = commentWithAuthor.comment.authorId == currentUserId;
-    final isDeleted = commentWithAuthor.comment.isDeleted ?? false;
-
-    return Container(
+    return Padding(
       padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          StreamBuilder<List<CommentWithAuthor>>(
+            stream: _commentStream,
+            builder: (context, snapshot) {
+              int totalCommentCount = 0;
+              if (snapshot.hasData) {
+                totalCommentCount = _calculateTotalCommentCount(snapshot.data!);
+              }
+              return Text(
+                '댓글 ($totalCommentCount)',
+                style: GoogleFonts.roboto(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple.shade700,
+                ),
+              );
+            },
+          ),
+          SizedBox(height: 16),
+          StreamBuilder<List<CommentWithAuthor>>(
+            stream: _commentStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Text('아직 댓글이 없습니다.');
+              } else {
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    return _buildCommentItem(snapshot.data![index], 0);
+                  },
+                );
+              }
+            },
+          ),
+          SizedBox(height: 16),
+          _buildCommentInput(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentItem(CommentWithAuthor commentWithAuthor, int depth) {
+    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    final isAuthor = commentWithAuthor.comment.authorId == currentUserId;
+    final isDeleted = commentWithAuthor.comment.isDeleted ?? false;
+
+    if (commentWithAuthor.comment.content == null) {
+      // 완전히 삭제된 댓글은 표시하지 않음
+      return SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: EdgeInsets.only(left: depth * 20.0),
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (!isDeleted)
                 UserAvatar(
                   avatarUrl: commentWithAuthor.authorAvatarUrl,
                   name: commentWithAuthor.authorName,
-                  radius: 20,
-                )
-              else
-                Icon(Icons.block, color: Colors.grey, size: 40),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isDeleted ? '삭제된 댓글' : commentWithAuthor.authorName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDeleted ? Colors.grey : Colors.black,
-                      ),
-                    ),
-                    Text(
-                      getSmartTimeString(commentWithAuthor.comment.createdAt
-                          .toIso8601String()),
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            isDeleted ? '이 댓글은 삭제되었습니다.' : commentWithAuthor.comment.content,
-            style: TextStyle(
-              color: isDeleted ? Colors.grey : Colors.black,
-              fontStyle: isDeleted ? FontStyle.italic : FontStyle.normal,
-            ),
-          ),
-          if (!isDeleted) ...[
-            SizedBox(height: 8),
-            Row(
-              children: [
-                TextButton.icon(
-                  icon: Icon(Icons.reply, size: 16),
-                  label: Text('답글'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey[600],
-                    padding: EdgeInsets.zero,
-                  ),
-                  onPressed: () => _showReplyInput(commentWithAuthor),
-                ),
-                Spacer(),
-                if (isAuthor)
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit, size: 16),
-                        onPressed: () =>
-                            _showEditCommentDialog(commentWithAuthor),
-                        color: Colors.blue,
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete, size: 16),
-                        onPressed: () => showDeleteConfirmationDialog(context,
-                            () => _deleteComment(commentWithAuthor.comment.id)),
-                        color: Colors.red,
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ],
-          if (commentWithAuthor.replies.isNotEmpty)
-            _buildRepliesSection(commentWithAuthor.replies),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommentInput() {
-    return Container(
-      padding: EdgeInsets.all(8),
-      color: Colors.white,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: commentController,
-              decoration: InputDecoration(
-                hintText: '댓글을 입력하세요...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[200],
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              ),
-            ),
-          ),
-          SizedBox(width: 8),
-          IconButton(
-            icon: Icon(Icons.send, color: Theme.of(context).primaryColor),
-            onPressed: _addComment,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRepliesSection(List<CommentWithAuthor> replies) {
-    return Container(
-      margin: EdgeInsets.only(left: 32, top: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(
-            color: Colors.grey[300]!,
-            width: 2,
-          ),
-        ),
-      ),
-      child: ExpansionTile(
-        title: Text('${replies.length}개의 답글'),
-        tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        children: replies.map((reply) => _buildReplyItem(reply)).toList(),
-      ),
-    );
-  }
-
-  Widget _buildReplyItem(CommentWithAuthor reply) {
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-    final isAuthor = reply.comment.authorId == currentUserId;
-    final isDeleted = reply.comment.isDeleted ?? false;
-
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (!isDeleted)
-                UserAvatar(
-                  avatarUrl: reply.authorAvatarUrl,
-                  name: reply.authorName,
                   radius: 16,
-                )
-              else
-                Icon(Icons.block, color: Colors.grey, size: 32),
+                ),
               SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isDeleted ? '삭제된 댓글' : commentWithAuthor.authorName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDeleted ? Colors.grey : Colors.black,
+                          ),
+                        ),
+                        if (isAuthor && !isDeleted)
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.edit, size: 18),
+                                onPressed: () => _showEditCommentDialog(commentWithAuthor),
+                                color: Colors.blue,
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, size: 18),
+                                onPressed: () {
+                                  showDeleteConfirmationDialog(
+                                    context,
+                                        () => _deleteComment(commentWithAuthor.comment.id),
+                                  );
+                                },
+                                color: Colors.red,
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
                     Text(
-                      isDeleted ? '삭제된 댓글' : reply.authorName,
+                      commentWithAuthor.comment.content,
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
                         color: isDeleted ? Colors.grey : Colors.black,
+                        fontStyle:
+                        isDeleted ? FontStyle.italic : FontStyle.normal,
                       ),
                     ),
+                    SizedBox(height: 4),
                     Text(
-                      getSmartTimeString(reply.comment.createdAt.toIso8601String()),
+                      getSmartTimeString(commentWithAuthor.comment.createdAt
+                          .toIso8601String()),
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
+                    SizedBox(height: 4),
+                    if (!isDeleted)
+                      GestureDetector(
+                        onTap: () => _showReplyInput(commentWithAuthor.comment),
+                        child: Text(
+                          '답글 달기',
+                          style: TextStyle(color: Colors.blue, fontSize: 12),
+                        ),
+                      ),
                   ],
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
-          Text(
-            isDeleted ? '이 댓글은 삭제되었습니다.' : reply.comment.content,
-            style: TextStyle(
-              color: isDeleted ? Colors.grey : Colors.black,
-              fontStyle: isDeleted ? FontStyle.italic : FontStyle.normal,
+        ),
+        if (commentWithAuthor.replies.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(left: 20.0),
+            child: Column(
+              children: commentWithAuthor.replies.map((reply) {
+                return _buildCommentItem(reply, depth + 1);
+              }).toList(),
             ),
           ),
-          if (!isDeleted && isAuthor)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.edit, size: 16),
-                  onPressed: () => _showEditCommentDialog(reply),
-                  color: Colors.blue,
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete, size: 16),
-                  onPressed: () => showDeleteConfirmationDialog(context, () => _deleteComment(reply.comment.id)),
-                  color: Colors.red,
-                ),
-              ],
+      ],
+    );
+  }
+
+  Widget _buildCommentInput() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: commentController,
+            decoration: InputDecoration(
+              hintText: '댓글을 입력하세요...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
-        ],
-      ),
+          ),
+        ),
+        SizedBox(width: 8),
+        IconButton(
+          icon: Icon(Icons.send, color: Colors.purple.shade400),
+          onPressed: _addComment,
+        ),
+      ],
     );
   }
 
@@ -703,7 +589,7 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-  void _showReplyInput(CommentWithAuthor parentComment) {
+  void _showReplyInput(Comment parentComment) {
     final TextEditingController replyController = TextEditingController();
 
     showModalBottomSheet(
@@ -712,32 +598,30 @@ class _DetailScreenState extends State<DetailScreen> {
       builder: (BuildContext context) {
         return Padding(
           padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Container(
             padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                Text('${parentComment.authorName}님에게 답글',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                TextField(
-                  controller: replyController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: '답글을 입력하세요...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
+                Expanded(
+                  child: TextField(
+                      controller: replyController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: '답글을 입력하세요...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onSubmitted: (value) {
+                        _submitReply(value, parentComment.id);
+                        Navigator.pop(context);
+                      }),
                 ),
-                SizedBox(height: 8),
-                ElevatedButton(
-                  child: Text('답글 달기'),
+                IconButton(
+                  icon: Icon(Icons.send),
                   onPressed: () {
-                    _submitReply(
-                        replyController.text, parentComment.comment.id);
+                    _submitReply(replyController.text, parentComment.id);
                     Navigator.pop(context);
                   },
                 ),
@@ -847,7 +731,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
@@ -860,7 +744,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
@@ -878,8 +762,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _showEditCommentDialog(CommentWithAuthor commentWithAuthor) {
-    final TextEditingController editController =
-        TextEditingController(text: commentWithAuthor.comment.content);
+    final TextEditingController editController = TextEditingController(text: commentWithAuthor.comment.content);
 
     showDialog(
       context: context,
@@ -938,8 +821,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
@@ -951,12 +833,10 @@ class _DetailScreenState extends State<DetailScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () {
-                        _updateComment(
-                            commentWithAuthor.comment.id, editController.text);
+                        _updateComment(commentWithAuthor.comment.id, editController.text);
                         Navigator.of(context).pop();
                       },
                     ),
@@ -978,8 +858,7 @@ class _DetailScreenState extends State<DetailScreen> {
       );
       // 댓글 목록 새로고침
       setState(() {
-        _commentStream =
-            _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+        _commentStream = _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
       });
     } catch (e) {
       print('댓글 수정 중 오류 발생: $e');
@@ -987,12 +866,5 @@ class _DetailScreenState extends State<DetailScreen> {
         SnackBar(content: Text('댓글 수정 중 오류가 발생했습니다.')),
       );
     }
-  }
-
-  // 숫자 포맷팅 함수
-  String formatNumber(int number) {
-    if (number < 1000) return number.toString();
-    if (number < 1000000) return '${(number / 1000).toStringAsFixed(1)}K';
-    return '${(number / 1000000).toStringAsFixed(1)}M';
   }
 }
