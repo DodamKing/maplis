@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:maplis_demo/screens/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/home_screen.dart';
 import 'screens/community_screen.dart';
@@ -23,7 +22,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +43,7 @@ class MyApp extends StatelessWidget {
             fontSize: 28,
             color: Colors.white,
           ),
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         cardTheme: CardTheme(
           elevation: 5,
@@ -58,7 +57,7 @@ class MyApp extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
           ),
         ),
       ),
@@ -70,7 +69,7 @@ class MyApp extends StatelessWidget {
 class MainScreen extends StatefulWidget {
   final bool isLoggedIn;
 
-  const MainScreen({Key? key, required this.isLoggedIn}) : super(key: key);
+  const MainScreen({super.key, required this.isLoggedIn});
 
   @override
   State<MainScreen> createState() => _MainScreenState();

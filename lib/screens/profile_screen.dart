@@ -7,7 +7,7 @@ import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isLoggedIn;
-  const ProfileScreen({Key? key, required this.isLoggedIn}) : super(key: key);
+  const ProfileScreen({super.key, required this.isLoggedIn});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -63,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         future: _loadUserData(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           final user = snapshot.data;
@@ -78,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 16),
                     const UserStatsSection(),
                     const SizedBox(height: 16),
-                    EditProfileButton(),
+                    const EditProfileButton(),
                     const SizedBox(height: 16),
                     const RecentActivitiesSection(),
                     const SizedBox(height: 16),
@@ -100,7 +100,7 @@ class ProfileAppBar extends StatelessWidget {
   final User? user;
   final AuthService authService;
 
-  const ProfileAppBar({Key? key, required this.isLoggedIn, this.user, required this.authService}) : super(key: key);
+  const ProfileAppBar({super.key, required this.isLoggedIn, this.user, required this.authService});
 
   @override
   Widget build(BuildContext context) {
@@ -124,12 +124,12 @@ class ProfileAppBar extends StatelessWidget {
   void _showSettingsBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
       ),
       builder: (BuildContext context) {
         return Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -141,7 +141,7 @@ class ProfileAppBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text(
                 'Settings',
                 style: GoogleFonts.poppins(
@@ -150,9 +150,9 @@ class ProfileAppBar extends StatelessWidget {
                   color: Colors.purple.shade700,
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ListTile(
-                leading: Icon(Icons.edit, color: Colors.blue),
+                leading: const Icon(Icons.edit, color: Colors.blue),
                 title: Text('Edit Profile', style: GoogleFonts.poppins()),
                 onTap: () {
                   // Handle edit profile
@@ -160,7 +160,7 @@ class ProfileAppBar extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.security, color: Colors.green),
+                leading: const Icon(Icons.security, color: Colors.green),
                 title: Text('Privacy Settings', style: GoogleFonts.poppins()),
                 onTap: () {
                   // Handle privacy settings
@@ -169,24 +169,24 @@ class ProfileAppBar extends StatelessWidget {
               ),
               if (isLoggedIn)
                 ListTile(
-                  leading: Icon(Icons.logout, color: Colors.red),
+                  leading: const Icon(Icons.logout, color: Colors.red),
                   title: Text('Logout', style: GoogleFonts.poppins()),
                   onTap: () async {
                     // await Supabase.instance.client.auth.signOut();
                     await authService.signOut();
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                           (route) => false,
                     );
                   },
                 ),
               if (!isLoggedIn)
                 ListTile(
-                  leading: Icon(Icons.exit_to_app, color: Colors.orange),
+                  leading: const Icon(Icons.exit_to_app, color: Colors.orange),
                   title: Text('Exit Prototype', style: GoogleFonts.poppins()),
                   onTap: () {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                           (route) => false,
                     );
                   },
@@ -203,7 +203,7 @@ class ProfileBackground extends StatelessWidget {
   final bool isLoggedIn;
   final User? user;
 
-  const ProfileBackground({Key? key, required this.isLoggedIn, this.user}) : super(key: key);
+  const ProfileBackground({super.key, required this.isLoggedIn, this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +241,7 @@ class UserInfoSection extends StatelessWidget {
   final bool isLoggedIn;
   final User? user;
 
-  const UserInfoSection({Key? key, required this.isLoggedIn, this.user}) : super(key: key);
+  const UserInfoSection({super.key, required this.isLoggedIn, this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +273,7 @@ class UserInfoSection extends StatelessWidget {
 }
 
 class UserStatsSection extends StatelessWidget {
-  const UserStatsSection({Key? key}) : super(key: key);
+  const UserStatsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -302,21 +302,23 @@ class UserStatsSection extends StatelessWidget {
 }
 
 class EditProfileButton extends StatelessWidget {
+  const EditProfileButton({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      child: Text('Edit Profile', style: GoogleFonts.poppins(fontSize: 16)),
       onPressed: () {},
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.purple.shade400,
-        minimumSize: Size(double.infinity, 50),
+        minimumSize: const Size(double.infinity, 50),
       ),
+      child: Text('Edit Profile', style: GoogleFonts.poppins(fontSize: 16)),
     );
   }
 }
 
 class RecentActivitiesSection extends StatelessWidget {
-  const RecentActivitiesSection({Key? key}) : super(key: key);
+  const RecentActivitiesSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -359,7 +361,7 @@ class RecentActivitiesSection extends StatelessWidget {
 }
 
 class UserPostsSection extends StatelessWidget {
-  const UserPostsSection({Key? key}) : super(key: key);
+  const UserPostsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -374,8 +376,8 @@ class UserPostsSection extends StatelessWidget {
         ),
         GridView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 4,
             mainAxisSpacing: 4,
@@ -394,18 +396,18 @@ class UserPostsSection extends StatelessWidget {
 }
 
 class PrototypeModeIndicator extends StatelessWidget {
-  const PrototypeModeIndicator({Key? key}) : super(key: key);
+  const PrototypeModeIndicator({super.key});
 
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         color: Colors.orange.withOpacity(0.1),
         child: Row(
           children: [
-            Icon(Icons.info_outline, color: Colors.orange),
-            SizedBox(width: 8),
+            const Icon(Icons.info_outline, color: Colors.orange),
+            const SizedBox(width: 8),
             Text(
               'Prototype Mode',
               style: GoogleFonts.poppins(

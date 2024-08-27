@@ -7,7 +7,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+  const SignUpScreen({super.key});
 
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
@@ -108,15 +108,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       File file = File(image.path);
       int fileSize = await file.length();
       if (fileSize > 5 * 1024 * 1024) { // 5MB
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image is too large. Compressing...')),
+          const SnackBar(content: Text('Image is too large. Compressing...')),
         );
         file = await _compressImage(file);
       }
@@ -143,7 +143,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<String?> _uploadImage(File imageFile) async {
     try {
-      final fileExt = imageFile!.path.split('.').last;
+      final fileExt = imageFile.path.split('.').last;
       final String path = 'avatars/${DateTime.now().toIso8601String()}.$fileExt';
       final fileBytes = await imageFile.readAsBytes();
       await Supabase.instance.client.storage.from('publics').uploadBinary(path, fileBytes);
@@ -265,13 +265,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         backgroundColor: Colors.white.withOpacity(0.9),
                         backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
                         child: _profileImage == null
-                            ? Icon(Icons.add_a_photo, size: 50, color: Colors.grey)
+                            ? const Icon(Icons.add_a_photo, size: 50, color: Colors.grey)
                             : null,
                       ),
                     ),
                     if (_profileImage == null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8.0),
                         child: Text(
                           'Profile image (optional)',
                           style: TextStyle(color: Colors.white70),
@@ -377,13 +377,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
                       child: _isLoading
-                          ? CircularProgressIndicator(color: Colors.white)
+                          ? const CircularProgressIndicator(color: Colors.white)
                           : const Text('Sign Up'),
                     ),
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
+                      child: const Text(
                         'Already have an account? Login',
                         style: TextStyle(color: Colors.white),
                       ),

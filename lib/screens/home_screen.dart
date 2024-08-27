@@ -5,12 +5,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'detail_screen.dart';
 import 'write_post_screen.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'dart:math';
 
 class HomeScreen extends StatefulWidget {
   final bool isLoggedIn;
 
-  const HomeScreen({Key? key, required this.isLoggedIn}) : super(key: key);
+  const HomeScreen({super.key, required this.isLoggedIn});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -135,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: _refreshController,
           onRefresh: _onRefresh,
           child: _isLoading
-              ? Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator())
               : ListView.builder(
             itemCount: _posts.length,
             itemBuilder: (context, index) {
@@ -168,12 +167,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               UserAvatar(avatarUrl: post['avatar_url'], name: post['author'], radius: 20,),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Text(
                                 post['author'],
                                 style: GoogleFonts.pacifico(
                                   textStyle: TextStyle(
-                                    fontFamilyFallback: ['eastSeaDokdo'],
+                                    fontFamilyFallback: const ['eastSeaDokdo'],
                                     fontSize: 18,
                                     color: Colors.purple.shade700,
                                   ),
@@ -181,34 +180,34 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                             post['title'],
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
                           ),
-                          SizedBox(height: 5),
+                          const SizedBox(height: 5),
                           ExpandableText(
                             text: post['content'],
                             maxLines: 2,
                             expandText: '더 보기',
                             collapseText: '접기',
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
                                 children: [
                                   Icon(Icons.thumb_up, color: Colors.purple.shade400),
-                                  SizedBox(width: 5),
+                                  const SizedBox(width: 5),
                                   Text('${post['likes'] ?? 0}'),
                                 ],
                               ),
-                              Icon(Icons.share, color: Colors.grey),
+                              const Icon(Icons.share, color: Colors.grey),
                             ],
                           ),
                         ],
@@ -222,9 +221,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add_rounded, color: Colors.white),
         onPressed: _navigateToWritePost,
         backgroundColor: Colors.purple.shade500,
+        child: const Icon(Icons.add_rounded, color: Colors.white),
       ),
     );
   }
@@ -237,12 +236,12 @@ class ExpandableText extends StatefulWidget {
   final String collapseText;
 
   const ExpandableText({
-    Key? key,
+    super.key,
     required this.text,
     this.maxLines = 2,
     this.expandText = '더 보기',
     this.collapseText = '접기',
-  }) : super(key: key);
+  });
 
   @override
   _ExpandableTextState createState() => _ExpandableTextState();
@@ -261,20 +260,20 @@ class _ExpandableTextState extends State<ExpandableText> {
             widget.text,
             maxLines: widget.maxLines,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               color: Colors.black54,
             ),
           ),
           secondChild: Text(
             widget.text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               color: Colors.black54,
             ),
           ),
           crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-          duration: Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 300),
         ),
         GestureDetector(
           onTap: () {
@@ -284,7 +283,7 @@ class _ExpandableTextState extends State<ExpandableText> {
           },
           child: Text(
             _expanded ? widget.collapseText : widget.expandText,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.blue,
               fontWeight: FontWeight.bold,
             ),

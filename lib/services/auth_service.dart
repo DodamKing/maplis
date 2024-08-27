@@ -1,9 +1,6 @@
-import 'dart:io' show Platform;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 // import 'package:local_auth_ios/local_auth_ios.dart';
 
@@ -105,17 +102,17 @@ class AuthService {
   }
 
   Future<bool> _authenticateWithBiometrics() async {
-    final LocalAuthentication _localAuth = LocalAuthentication();
+    final LocalAuthentication localAuth = LocalAuthentication();
 
     try {
-      bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      bool canCheckBiometrics = await localAuth.canCheckBiometrics;
       if (!canCheckBiometrics) {
         print("이 기기에서는 생체 인증을 사용할 수 없습니다.");
         return false;
       }
 
       List<BiometricType> availableBiometrics =
-          await _localAuth.getAvailableBiometrics();
+          await localAuth.getAvailableBiometrics();
       print("사용 가능한 생체 인증 방식: $availableBiometrics");
 
       String getBiometricHint(List<BiometricType> types) {
@@ -132,9 +129,9 @@ class AuthService {
 
       String authReason = '생체 인증을 사용하여 로그인';
       // String biometricHint = '생체 인증을 시작합니다';
-      String biometricHint = await getBiometricHint(availableBiometrics);
+      String biometricHint = getBiometricHint(availableBiometrics);
 
-      bool didAuthenticate = await _localAuth.authenticate(
+      bool didAuthenticate = await localAuth.authenticate(
         localizedReason: authReason,
         authMessages: [
           AndroidAuthMessages(

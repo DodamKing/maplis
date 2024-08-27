@@ -3,10 +3,9 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../main.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthenticationWrapper extends StatefulWidget {
-  const AuthenticationWrapper({Key? key}) : super(key: key);
+  const AuthenticationWrapper({super.key});
 
   @override
   _AuthenticationWrapperState createState() => _AuthenticationWrapperState();
@@ -41,23 +40,23 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> with Sing
       bool success = await _authService.autoLogin();
       if (success) {
         setState(() => _statusMessage = '로그인 성공!');
-        await Future.delayed(Duration(seconds: 1));
+        await Future.delayed(const Duration(seconds: 1));
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => MainScreen(isLoggedIn: true)),
+          MaterialPageRoute(builder: (context) => const MainScreen(isLoggedIn: true)),
         );
       } else {
         setState(() => _statusMessage = '수동 로그인이 필요합니다.');
-        await Future.delayed(Duration(seconds: 1));
+        await Future.delayed(const Duration(seconds: 1));
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => LoginScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       }
     } catch (e) {
       print('Auto login error: $e');
       setState(() => _statusMessage = '오류가 발생했습니다. 다시 시도해 주세요.');
-      await Future.delayed(Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 2));
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     }
   }
@@ -86,12 +85,12 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> with Sing
                     Shadow(
                       blurRadius: 10.0,
                       color: Colors.black.withOpacity(0.3),
-                      offset: Offset(5.0, 5.0),
+                      offset: const Offset(5.0, 5.0),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
               ScaleTransition(
                 scale: _animation,
                 child: Container(
@@ -115,7 +114,7 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> with Sing
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text(
                 _statusMessage,
                 style: GoogleFonts.poppins(

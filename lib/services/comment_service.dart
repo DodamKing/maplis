@@ -139,7 +139,7 @@ class CommentService {
         .select('id')
         .eq('parent_id', commentId);
 
-    if (childComments.length == 0) {
+    if (childComments.isEmpty) {
       // 자식 댓글이 없는 경우: 완전히 삭제
       await Supabase.instance.client
           .from('comments')
@@ -167,7 +167,7 @@ class CommentService {
           .eq('id', commentId);
     } catch (e) {
       print('Error soft deleting comment: $e');
-      throw e;
+      rethrow;
     }
   }
 

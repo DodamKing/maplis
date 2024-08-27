@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -53,11 +52,11 @@ class UserAvatar extends StatefulWidget {
   static final Color defaultBackgroundColor = Colors.purple.shade300;
 
   const UserAvatar({
-    Key? key,
+    super.key,
     required this.avatarUrl,
     required this.name,
     this.radius = 16,
-  }) : super(key: key);
+  });
 
   @override
   _UserAvatarState createState() => _UserAvatarState();
@@ -76,7 +75,7 @@ class _UserAvatarState extends State<UserAvatar> {
   Future<void> _loadAvatar() async {
     if (widget.avatarUrl != null) {
       // 실제 네트워크 이미지 로딩을 시뮬레이션
-      await Future.delayed(Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 2));
       if (mounted) {
         setState(() {
           _loadedAvatarUrl = widget.avatarUrl;
@@ -113,10 +112,10 @@ class _UserAvatarState extends State<UserAvatar> {
                   ),
                 ),
               ),
-              placeholder: (context, url) => CircularProgressIndicator(),
+              placeholder: (context, url) => const CircularProgressIndicator(),
               errorWidget: (context, url, error) {
                 print('Error loading image: $error');
-                return Icon(Icons.error);
+                return const Icon(Icons.error);
               },
             )
           : _buildDefaultAvatar(backgroundColor),

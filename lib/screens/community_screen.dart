@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CommunityScreen extends StatelessWidget {
-  const CommunityScreen({Key? key}) : super(key: key);
+  const CommunityScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class CommunityScreen extends StatelessWidget {
               ),
               color: Colors.white.withOpacity(0.9),
               child: ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 leading: CircleAvatar(
                   backgroundImage: NetworkImage('https://picsum.photos/seed/community$index/100'),
                   radius: 30,
@@ -58,16 +58,16 @@ class CommunityScreen extends StatelessWidget {
                     )
                 ),
                 trailing: ElevatedButton(
-                  child: Text('Join',
-                      style: GoogleFonts.poppins(color: Colors.white)
-                  ),
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade400,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20)
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  ),
+                  child: Text('Join',
+                      style: GoogleFonts.poppins(color: Colors.white)
                   ),
                 ),
                 onTap: () {
@@ -79,9 +79,9 @@ class CommunityScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add_rounded, color: Colors.white),
         onPressed: () {},
         backgroundColor: Colors.purple.shade500,
+        child: const Icon(Icons.add_rounded, color: Colors.white),
       ),
     );
   }

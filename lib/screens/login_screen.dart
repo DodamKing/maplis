@@ -10,7 +10,7 @@ import '../widgets/exit_confirmation_mixin.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -50,13 +50,13 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
       } else {
         // 자동 로그인 실패 시 사용자에게 알림
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('자동 로그인에 실패했습니다. 다시 로그인해 주세요.')),
+          const SnackBar(content: Text('자동 로그인에 실패했습니다. 다시 로그인해 주세요.')),
         );
       }
     } catch (e) {
       print('자동 로그인 중 오류 발생: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('로그인 중 오류가 발생했습니다. 다시 시도해 주세요.')),
+        const SnackBar(content: Text('로그인 중 오류가 발생했습니다. 다시 시도해 주세요.')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -117,16 +117,18 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
       if (provider == 'kakao') {
         print('카카오 로그인 따로?');
       } else {
-        await Supabase.instance.client.auth.signInWithOAuth(
-          Provider.values
-              .firstWhere((e) => e.toString() == 'Provider.$provider'),
+        final supabaseProvider = OAuthProvider.values.firstWhere(
+              (e) => e.toString().split('.').last.toLowerCase() == provider.toLowerCase(),
+          orElse: () => throw Exception('Unsupported provider: $provider'),
         );
+
+        await Supabase.instance.client.auth.signInWithOAuth(supabaseProvider);
       }
       // 소셜 로그인 성공 후 처리는 Supabase 인증 상태 변경 리스너에서 처리됩니다.
     } catch (e) {
       print('Social Login Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Social login failed. Please try again.')),
+        const SnackBar(content: Text('Social login failed. Please try again.')),
       );
     }
   }
@@ -256,19 +258,19 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
-                                shape: CircleBorder(),
-                                padding: EdgeInsets.all(8),
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(8),
                               ),
-                              child: FaIcon(FontAwesomeIcons.google,
+                              child: const FaIcon(FontAwesomeIcons.google,
                                   color: Color(0xFF4285F4)),
                               onPressed: () => _socialLogin('google'),
                             ),
-                            SizedBox(width: 16),
+                            const SizedBox(width: 16),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFEE500), // 카카오 노란색
-                                shape: CircleBorder(),
-                                padding: EdgeInsets.all(8),
+                                backgroundColor: const Color(0xFFFEE500), // 카카오 노란색
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(8),
                               ),
                               child: SvgPicture.asset(
                                 'assets/images/kakao_login_icon.svg',
@@ -277,14 +279,14 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
                               ),
                               onPressed: () => _socialLogin('kakao'),
                             ),
-                            SizedBox(width: 16), // 간격 추가
+                            const SizedBox(width: 16), // 간격 추가
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
-                                shape: CircleBorder(),
-                                padding: EdgeInsets.all(8),
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(8),
                               ),
-                              child: FaIcon(FontAwesomeIcons.apple,
+                              child: const FaIcon(FontAwesomeIcons.apple,
                                   color: Colors.white),
                               onPressed: () => _socialLogin('apple'),
                             ),
@@ -299,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> with ExitConfirmationMixin {
                                   builder: (context) => const SignUpScreen()),
                             );
                           },
-                          child: Text(
+                          child: const Text(
                             'Don\'t have an account? Sign Up',
                             style: TextStyle(color: Colors.white),
                           ),

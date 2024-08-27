@@ -9,10 +9,10 @@ class WritePostScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onPrototypePostSaved;
 
   const WritePostScreen({
-    Key? key,
+    super.key,
     required this.isLoggedIn,
     required this.onPrototypePostSaved
-  }) : super(key: key);
+  });
 
   @override
   _WritePostScreenState createState() => _WritePostScreenState();
@@ -38,7 +38,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
   Future<void> _savePost() async {
     if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
@@ -148,10 +148,10 @@ class _WritePostScreenState extends State<WritePostScreen> {
             children: [
               Expanded(
                 child: _isLoading
-                    ? Center(child: CircularProgressIndicator(color: Colors.white))
+                    ? const Center(child: CircularProgressIndicator(color: Colors.white))
                     : SingleChildScrollView(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -165,7 +165,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
                             padding: const EdgeInsets.all(16.0),
                             child: TextField(
                               controller: _titleController,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 hintText: 'Title',
                                 border: InputBorder.none,
                               ),
@@ -173,7 +173,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Card(
                           elevation: 5,
                           shape: RoundedRectangleBorder(
@@ -184,7 +184,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
                             padding: const EdgeInsets.all(16.0),
                             child: TextField(
                               controller: _contentController,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 hintText: 'What\'s on your mind?',
                                 border: InputBorder.none,
                               ),
@@ -194,7 +194,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         if (_image != null) ...[
                           Card(
                             elevation: 5,
@@ -214,19 +214,19 @@ class _WritePostScreenState extends State<WritePostScreen> {
                                   child: GestureDetector(
                                     onTap: _removeImage,
                                     child: Container(
-                                      padding: EdgeInsets.all(4),
+                                      padding: const EdgeInsets.all(4),
                                       decoration: BoxDecoration(
                                         color: Colors.black.withOpacity(0.6),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: Icon(Icons.close, color: Colors.white, size: 20),
+                                      child: const Icon(Icons.close, color: Colors.white, size: 20),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                         ],
                       ],
                     ),
@@ -234,16 +234,16 @@ class _WritePostScreenState extends State<WritePostScreen> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: getImage,
-                        icon: Icon(Icons.camera_alt, color: Colors.white),
-                        label: Text('Add Photo', style: TextStyle(color: Colors.white)),
+                        icon: const Icon(Icons.camera_alt, color: Colors.white),
+                        label: const Text('Add Photo', style: TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -251,17 +251,17 @@ class _WritePostScreenState extends State<WritePostScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _savePost,
-                      child: Text('Post', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                         backgroundColor: Colors.blue.shade400,
                       ),
+                      child: const Text('Post', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

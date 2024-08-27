@@ -14,20 +14,18 @@ class DetailScreen extends StatefulWidget {
   final bool isLoggedIn;
 
   const DetailScreen({
-    Key? key,
+    super.key,
     required this.post,
     required this.isLoggedIn,
-  }) : super(key: key);
+  });
 
   @override
   _DetailScreenState createState() => _DetailScreenState();
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  // bool isLiked = false;
-  // int likeCount = 0;
   TextEditingController commentController = TextEditingController();
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   final CommentService _commentService = CommentService();
   late Stream<List<CommentWithAuthor>> _commentStream;
 
@@ -42,8 +40,7 @@ class _DetailScreenState extends State<DetailScreen> {
   void initState() {
     super.initState();
 
-    _commentStream =
-        _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
+    _commentStream = _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
     _refreshLikeState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,18 +49,20 @@ class _DetailScreenState extends State<DetailScreen> {
         if (!mounted) return;
         setState(() {
           _isKeyboardVisible = visible;
+          if (!visible) {
+            // 키보드가 사라질 때 좋아요 상태를 새로 불러옵니다.
+            _refreshLikeState();
+          }
         });
       });
     });
   }
 
   void _refreshLikeState() {
-    setState(() {
-      final currentUserId = Supabase.instance.client.auth.currentUser!.id;
-      final postId = widget.post['id'] as int;
-      _isLikedStream = _likeService.isLikedByUser(postId, currentUserId);
-      _likeCountStream = _likeService.getLikeCount(postId);
-    });
+    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    final postId = widget.post['id'] as int;
+    _isLikedStream = _likeService.isLikedByUser(postId, currentUserId);
+    _likeCountStream = _likeService.getLikeCount(postId);
   }
 
   @override
@@ -132,7 +131,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   slivers: [
                     SliverToBoxAdapter(
                       child: Card(
-                        margin: EdgeInsets.all(16),
+                        margin: const EdgeInsets.all(16),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
                         child: Column(
@@ -143,7 +142,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         ),
                       ),
                     ),
-                    SliverToBoxAdapter(
+                    const SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.all(16),
                         child: Text(
@@ -158,7 +157,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                     SliverToBoxAdapter(
                       child: Card(
-                        margin: EdgeInsets.symmetric(horizontal: 16),
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
                         child: _buildCommentSection(),
@@ -179,17 +178,17 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget _buildPersistentAppBar() {
     return Container(
       color: Colors.white.withOpacity(0.3),
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
             onPressed: () => Navigator.of(context).pop(),
           ),
           Expanded(
             child: Text(
               widget.post['title'],
-              style: TextStyle(
+              style: const TextStyle(
                   color: Colors.black,
                   fontSize: 18,
                   fontWeight: FontWeight.bold),
@@ -197,7 +196,7 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.more_horiz, color: Colors.black),
+            icon: const Icon(Icons.more_horiz, color: Colors.black),
             onPressed: () {
               // 추가 옵션 메뉴
             },
@@ -209,7 +208,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Widget _buildPostHeader() {
     return Padding(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           UserAvatar(
@@ -217,7 +216,7 @@ class _DetailScreenState extends State<DetailScreen> {
             name: widget.post['author'],
             radius: 24,
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,15 +239,15 @@ class _DetailScreenState extends State<DetailScreen> {
             onPressed: () {
               // 팔로우 기능
             },
-            child: Text('팔로우',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.purple.shade400,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
+            child: const Text('팔로우',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -259,7 +258,7 @@ class _DetailScreenState extends State<DetailScreen> {
     return SizedBox(
       width: double.infinity,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -270,11 +269,11 @@ class _DetailScreenState extends State<DetailScreen> {
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.purple.shade700,
-                  fontFamilyFallback: ['Noto Sans KR'],
+                  fontFamilyFallback: const ['Noto Sans KR'],
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             if (widget.post['image_url'] != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(15),
@@ -306,12 +305,12 @@ class _DetailScreenState extends State<DetailScreen> {
                       width: double.infinity,
                       height: 200,
                       color: Colors.grey[300],
-                      child: Icon(Icons.error, color: Colors.red),
+                      child: const Icon(Icons.error, color: Colors.red),
                     );
                   },
                 ),
               ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               widget.post['content'],
               style: GoogleFonts.notoSans(
@@ -343,7 +342,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 int likeCount = likeCountSnapshot.data ?? 0;
 
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border:
@@ -374,13 +373,13 @@ class _DetailScreenState extends State<DetailScreen> {
                         onPressed: () {
                           _scrollController.animateTo(
                             _scrollController.position.maxScrollExtent,
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             curve: Curves.easeOut,
                           );
                         },
                       ),
                       _buildInteractionButton(
-                        key: ValueKey('save_button'),
+                        key: const ValueKey('save_button'),
                         icon: Icons.bookmark_border,
                         label: '저장',
                         color: Colors.grey,
@@ -406,17 +405,17 @@ class _DetailScreenState extends State<DetailScreen> {
     required VoidCallback onPressed,
     required Color color,
   }) {
-    return Container(
+    return SizedBox(
       width: 100, // 고정 너비 설정
       child: InkWell(
         onTap: onPressed,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           child: Row(
             mainAxisSize: MainAxisSize.min, // 내용물에 맞춰 크기 조정
             children: [
               Icon(icon, color: color),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               Expanded( // Expanded를 사용하여 남은 공간을 차지하도록 함
                 child: Text(
                   label,
@@ -436,11 +435,11 @@ class _DetailScreenState extends State<DetailScreen> {
       stream: _commentStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Padding(
+          return const Padding(
             padding: EdgeInsets.all(16),
             child: Text('아직 댓글이 없습니다.'),
           );
@@ -450,9 +449,9 @@ class _DetailScreenState extends State<DetailScreen> {
               .toList();
           return ListView.separated(
             shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: parentComments.length,
-            separatorBuilder: (context, index) => Divider(height: 1),
+            separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               return _buildCommentItem(parentComments[index]);
             },
@@ -468,7 +467,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final isDeleted = commentWithAuthor.comment.isDeleted ?? false;
 
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -481,8 +480,8 @@ class _DetailScreenState extends State<DetailScreen> {
                   radius: 20,
                 )
               else
-                Icon(Icons.block, color: Colors.grey, size: 40),
-              SizedBox(width: 12),
+                const Icon(Icons.block, color: Colors.grey, size: 40),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,14 +496,14 @@ class _DetailScreenState extends State<DetailScreen> {
                     Text(
                       getSmartTimeString(commentWithAuthor.comment.createdAt
                           .toIso8601String()),
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             isDeleted ? '이 댓글은 삭제되었습니다.' : commentWithAuthor.comment.content,
             style: TextStyle(
@@ -513,30 +512,30 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           ),
           if (!isDeleted) ...[
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
                 TextButton.icon(
-                  icon: Icon(Icons.reply, size: 16),
-                  label: Text('답글'),
+                  icon: const Icon(Icons.reply, size: 16),
+                  label: const Text('답글'),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.grey[600],
                     padding: EdgeInsets.zero,
                   ),
                   onPressed: () => _showReplyInput(commentWithAuthor),
                 ),
-                Spacer(),
+                const Spacer(),
                 if (isAuthor)
                   Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.edit, size: 16),
+                        icon: const Icon(Icons.edit, size: 16),
                         onPressed: () =>
                             _showEditCommentDialog(commentWithAuthor),
                         color: Colors.blue,
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete, size: 16),
+                        icon: const Icon(Icons.delete, size: 16),
                         onPressed: () => showDeleteConfirmationDialog(context,
                             () => _deleteComment(commentWithAuthor.comment.id)),
                         color: Colors.red,
@@ -555,7 +554,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Widget _buildCommentInput() {
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: const EdgeInsets.all(8),
       color: Colors.white,
       child: Row(
         children: [
@@ -571,11 +570,11 @@ class _DetailScreenState extends State<DetailScreen> {
                 filled: true,
                 fillColor: Colors.grey[200],
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           IconButton(
             icon: Icon(Icons.send, color: Theme.of(context).primaryColor),
             onPressed: _addComment,
@@ -587,7 +586,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Widget _buildRepliesSection(List<CommentWithAuthor> replies) {
     return Container(
-      margin: EdgeInsets.only(left: 32, top: 8),
+      margin: const EdgeInsets.only(left: 32, top: 8),
       decoration: BoxDecoration(
         border: Border(
           left: BorderSide(
@@ -598,7 +597,7 @@ class _DetailScreenState extends State<DetailScreen> {
       ),
       child: ExpansionTile(
         title: Text('${replies.length}개의 답글'),
-        tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
         children: replies.map((reply) => _buildReplyItem(reply)).toList(),
       ),
     );
@@ -610,7 +609,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final isDeleted = reply.comment.isDeleted ?? false;
 
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -623,8 +622,8 @@ class _DetailScreenState extends State<DetailScreen> {
                   radius: 16,
                 )
               else
-                Icon(Icons.block, color: Colors.grey, size: 32),
-              SizedBox(width: 8),
+                const Icon(Icons.block, color: Colors.grey, size: 32),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -638,14 +637,14 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                     Text(
                       getSmartTimeString(reply.comment.createdAt.toIso8601String()),
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             isDeleted ? '이 댓글은 삭제되었습니다.' : reply.comment.content,
             style: TextStyle(
@@ -658,12 +657,12 @@ class _DetailScreenState extends State<DetailScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit, size: 16),
+                  icon: const Icon(Icons.edit, size: 16),
                   onPressed: () => _showEditCommentDialog(reply),
                   color: Colors.blue,
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete, size: 16),
+                  icon: const Icon(Icons.delete, size: 16),
                   onPressed: () => showDeleteConfirmationDialog(context, () => _deleteComment(reply.comment.id)),
                   color: Colors.red,
                 ),
@@ -686,7 +685,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
 
@@ -697,7 +696,7 @@ class _DetailScreenState extends State<DetailScreen> {
       } catch (e) {
         print('댓글 추가에 실패했습니다: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('댓글 추가에 실패했습니다.')),
+          const SnackBar(content: Text('댓글 추가에 실패했습니다.')),
         );
       }
     }
@@ -714,14 +713,14 @@ class _DetailScreenState extends State<DetailScreen> {
           padding:
               EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('${parentComment.authorName}님에게 답글',
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
                 TextField(
                   controller: replyController,
                   autofocus: true,
@@ -732,9 +731,9 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 ElevatedButton(
-                  child: Text('답글 달기'),
+                  child: const Text('답글 달기'),
                   onPressed: () {
                     _submitReply(
                         replyController.text, parentComment.comment.id);
@@ -765,7 +764,7 @@ class _DetailScreenState extends State<DetailScreen> {
       } catch (e) {
         print('답글 추가에 실패했습니다: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('답글 추가에 실패했습니다.')),
+          const SnackBar(content: Text('답글 추가에 실패했습니다.')),
         );
       }
     }
@@ -781,12 +780,12 @@ class _DetailScreenState extends State<DetailScreen> {
             _commentService.subscribeToCommentsWithAuthor(widget.post['id']);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('댓글이 삭제되었습니다.')),
+        const SnackBar(content: Text('댓글이 삭제되었습니다.')),
       );
     } catch (e) {
       print('댓글 삭제 중 오류 발생: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('댓글 삭제 중 오류가 발생했습니다.')),
+        const SnackBar(content: Text('댓글 삭제 중 오류가 발생했습니다.')),
       );
     }
   }
@@ -800,7 +799,7 @@ class _DetailScreenState extends State<DetailScreen> {
             borderRadius: BorderRadius.circular(20.0),
           ),
           child: Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
@@ -812,13 +811,13 @@ class _DetailScreenState extends State<DetailScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.warning_amber_rounded,
                   color: Colors.orange,
                   size: 64,
                 ),
-                SizedBox(height: 20),
-                Text(
+                const SizedBox(height: 20),
+                const Text(
                   '댓글을 삭제하시겠습니까?',
                   style: TextStyle(
                     fontSize: 18,
@@ -826,20 +825,19 @@ class _DetailScreenState extends State<DetailScreen> {
                     color: Colors.black87,
                   ),
                 ),
-                SizedBox(height: 10),
-                Text(
+                const SizedBox(height: 10),
+                const Text(
                   '이 작업은 되돌릴 수 없습니다.',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.black54,
                   ),
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ElevatedButton(
-                      child: Text('취소'),
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.grey,
@@ -847,12 +845,12 @@ class _DetailScreenState extends State<DetailScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('취소'),
                     ),
                     ElevatedButton(
-                      child: Text('삭제'),
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.red,
@@ -860,12 +858,13 @@ class _DetailScreenState extends State<DetailScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
                         onConfirm();
                       },
+                      child: const Text('삭제'),
                     ),
                   ],
                 ),
@@ -889,7 +888,7 @@ class _DetailScreenState extends State<DetailScreen> {
             borderRadius: BorderRadius.circular(20.0),
           ),
           child: Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
@@ -901,13 +900,13 @@ class _DetailScreenState extends State<DetailScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.edit,
                   color: Colors.blue,
                   size: 64,
                 ),
-                SizedBox(height: 20),
-                Text(
+                const SizedBox(height: 20),
+                const Text(
                   '댓글 수정',
                   style: TextStyle(
                     fontSize: 18,
@@ -915,7 +914,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     color: Colors.black87,
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 TextField(
                   controller: editController,
                   decoration: InputDecoration(
@@ -926,12 +925,11 @@ class _DetailScreenState extends State<DetailScreen> {
                   ),
                   maxLines: 3,
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ElevatedButton(
-                      child: Text('취소'),
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.grey,
@@ -939,12 +937,12 @@ class _DetailScreenState extends State<DetailScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('취소'),
                     ),
                     ElevatedButton(
-                      child: Text('수정'),
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.blue,
@@ -952,13 +950,14 @@ class _DetailScreenState extends State<DetailScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                       onPressed: () {
                         _updateComment(
                             commentWithAuthor.comment.id, editController.text);
                         Navigator.of(context).pop();
                       },
+                      child: const Text('수정'),
                     ),
                   ],
                 ),
@@ -974,7 +973,7 @@ class _DetailScreenState extends State<DetailScreen> {
     try {
       await _commentService.updateComment(commentId, newContent);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('댓글이 수정되었습니다.')),
+        const SnackBar(content: Text('댓글이 수정되었습니다.')),
       );
       // 댓글 목록 새로고침
       setState(() {
@@ -984,7 +983,7 @@ class _DetailScreenState extends State<DetailScreen> {
     } catch (e) {
       print('댓글 수정 중 오류 발생: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('댓글 수정 중 오류가 발생했습니다.')),
+        const SnackBar(content: Text('댓글 수정 중 오류가 발생했습니다.')),
       );
     }
   }
