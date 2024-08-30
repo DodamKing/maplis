@@ -94,11 +94,16 @@ class _MainScreenState extends State<MainScreen> with ExitConfirmationMixin {
     }
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _checkBiometricSetup() async {
     try {
       String userId = _authService.getCurrentUserId();
       bool biometricEnabled = await _authService.isBiometricEnabled(userId);
-      if (!biometricEnabled) {
+      if (!biometricEnabled && mounted) {
         // 화면이 완전히 빌드된 후 다이얼로그를 표시하기 위해 WidgetsBinding.instance.addPostFrameCallback 사용
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showBiometricSetupDialog(userId);
@@ -110,9 +115,9 @@ class _MainScreenState extends State<MainScreen> with ExitConfirmationMixin {
   }
 
   Future<void> _showBiometricSetupDialog(String userId) async {
-    showDialog(
+    bool? result = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('생체 인증 설정'),
           content: Text('로그인을 더 빠르고 안전하게 할 수 있도록 생체 인증을 설정하시겠습니까?'),
@@ -120,29 +125,32 @@ class _MainScreenState extends State<MainScreen> with ExitConfirmationMixin {
             TextButton(
               child: Text('나중에'),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop(false);
               },
             ),
             ElevatedButton(
               child: Text('설정하기'),
-              onPressed: () async {
-                Navigator.of(context).pop();
-                bool success = await _authService.setBiometricAuth(userId);
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('생체 인증이 설정되었습니다.')),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('생체 인증 설정에 실패했습니다.')),
-                  );
-                }
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
               },
             ),
           ],
         );
       },
     );
+
+    if (result == true && mounted) {
+      bool success = await _authService.setBiometricAuth(userId);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('생체 인증이 설정되었습니다.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('생체 인증 설정에 실패했습니다.')),
+        );
+      }
+    }
   }
 
   @override

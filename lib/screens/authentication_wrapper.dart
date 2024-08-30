@@ -50,7 +50,6 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> with Sing
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
-        // _navigateToLogin();
       }
     } catch (e) {
       print('Auto login error: $e');
@@ -59,26 +58,8 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> with Sing
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-      // _navigateToLogin();
     }
   }
-
-  // void _navigateToLogin() {
-  //   Navigator.of(context).pushReplacement(
-  //     MaterialPageRoute(builder: (context) => LoginScreen(
-  //       onLoginSuccess: (userId) async {
-  //         bool biometricEnabled = await _authService.isBiometricEnabled(userId);
-  //         if (!biometricEnabled) {
-  //           _showBiometricSetupDialog(userId);
-  //         } else {
-  //           Navigator.of(context).pushReplacement(
-  //             MaterialPageRoute(builder: (context) => const MainScreen(isLoggedIn: true)),
-  //           );
-  //         }
-  //       },
-  //     )),
-  //   );
-  // }
 
   Future<void> _showBiometricSetupDialog(String userId) async {
     showDialog(

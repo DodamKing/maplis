@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io' show Platform;
 
+import '../services/auth_service.dart';
+
 mixin ExitConfirmationMixin<T extends StatefulWidget> on State<T> {
   DateTime? lastBackPressTime;
   static const exitTimeInMillis = 2000;
+  final AuthService _authService = AuthService();
 
   Future<bool> showExitConfirmationDialog(bool didPop) async {
     if (didPop) return true;
@@ -60,7 +63,7 @@ mixin ExitConfirmationMixin<T extends StatefulWidget> on State<T> {
       await Future.delayed(const Duration(milliseconds: 300));
       // 앱 종료 로직
       if (Platform.isAndroid) {
-        SystemNavigator.pop();
+        // SystemNavigator.pop();
       } else if (Platform.isIOS) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }

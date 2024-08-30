@@ -77,8 +77,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     UserInfoSection(isLoggedIn: widget.isLoggedIn, user: user),
                     const SizedBox(height: 16),
                     const UserStatsSection(),
-                    const SizedBox(height: 16),
-                    const EditProfileButton(),
+                    // const SizedBox(height: 16),
+                    // const EditProfileButton(),
                     const SizedBox(height: 16),
                     const RecentActivitiesSection(),
                     const SizedBox(height: 16),
@@ -86,7 +86,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              if (!widget.isLoggedIn) const PrototypeModeIndicator(),
             ],
           );
         },
@@ -281,8 +280,8 @@ class UserStatsSection extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _buildStatColumn('Posts', '123'),
-        _buildStatColumn('Followers', '10.5K'),
-        _buildStatColumn('Following', '456'),
+        _buildStatColumn('Followers', '-'),
+        _buildStatColumn('Following', '-'),
       ],
     );
   }
@@ -391,34 +390,6 @@ class UserPostsSection extends StatelessWidget {
           },
         ),
       ],
-    );
-  }
-}
-
-class PrototypeModeIndicator extends StatelessWidget {
-  const PrototypeModeIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        color: Colors.orange.withOpacity(0.1),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline, color: Colors.orange),
-            const SizedBox(width: 8),
-            Text(
-              'Prototype Mode',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                color: Colors.orange,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

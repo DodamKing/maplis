@@ -33,6 +33,16 @@ class AuthService {
     return false;
   }
 
+  Future<bool> requireBiometricAuth() async {
+    String? userId = supabase.auth.currentUser?.id;
+    if (userId == null) return false;
+
+    bool? biometricEnabled = await isBiometricEnabled(userId);
+    if (biometricEnabled != true) return true; // 생체 인증이 설정되지 않았으면 바로 true 반환
+
+    return await _authenticateWithBiometrics('앱에 접근하려면 생체 인증이 필요합니다.');
+  }
+
   Future<bool> isBiometricEnabled(String userId) async {
     String? enabled = await _secureStorage.read(key: 'biometric_enabled_$userId');
     return enabled == 'true';
