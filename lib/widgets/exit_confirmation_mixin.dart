@@ -63,7 +63,7 @@ mixin ExitConfirmationMixin<T extends StatefulWidget> on State<T> {
       await Future.delayed(const Duration(milliseconds: 300));
       // 앱 종료 로직
       if (Platform.isAndroid) {
-        // SystemNavigator.pop();
+        SystemNavigator.pop();
       } else if (Platform.isIOS) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
