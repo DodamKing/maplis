@@ -50,6 +50,7 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> with Sing
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
+        // _navigateToLogin();
       }
     } catch (e) {
       print('Auto login error: $e');
@@ -58,8 +59,69 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> with Sing
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
+      // _navigateToLogin();
     }
   }
+
+  // void _navigateToLogin() {
+  //   Navigator.of(context).pushReplacement(
+  //     MaterialPageRoute(builder: (context) => LoginScreen(
+  //       onLoginSuccess: (userId) async {
+  //         bool biometricEnabled = await _authService.isBiometricEnabled(userId);
+  //         if (!biometricEnabled) {
+  //           _showBiometricSetupDialog(userId);
+  //         } else {
+  //           Navigator.of(context).pushReplacement(
+  //             MaterialPageRoute(builder: (context) => const MainScreen(isLoggedIn: true)),
+  //           );
+  //         }
+  //       },
+  //     )),
+  //   );
+  // }
+
+  Future<void> _showBiometricSetupDialog(String userId) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('생체 인증 설정'),
+          content: Text('로그인을 더 빠르고 안전하게 할 수 있도록 생체 인증을 설정하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('나중에'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const MainScreen(isLoggedIn: true)),
+                );
+              },
+            ),
+            ElevatedButton(
+              child: Text('설정하기'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                bool success = await _authService.setBiometricAuth(userId);
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('생체 인증이 설정되었습니다.')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('생체 인증 설정에 실패했습니다.')),
+                  );
+                }
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const MainScreen(isLoggedIn: true)),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {

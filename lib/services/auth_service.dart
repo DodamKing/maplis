@@ -1,55 +1,50 @@
-import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
-// import 'package:local_auth_ios/local_auth_ios.dart';
 
 class AuthService {
   final supabase = Supabase.instance.client;
   final LocalAuthentication _localAuth = LocalAuthentication();
+  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   Future<bool> signInWithEmailAndPassword(String email, String password) async {
     final response = await supabase.auth
         .signInWithPassword(email: email, password: password);
     if (response.user != null) {
+      await _secureStorage.write(key: 'lastSignedInUser', value: response.user!.id);
       return true;
     }
     return false;
   }
 
-  // Future<bool> showBiometricSetupDialog(BuildContext context) async {
-  //   return await showDialog<bool>(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Text('생체 인증 설정'),
-  //         content: SingleChildScrollView(
-  //           child: ListBody(
-  //             children: <Widget>[
-  //               Text('로그인을 더 빠르고 안전하게 할 수 있도록 생체 인증을 설정하시겠습니까?'),
-  //               SizedBox(height: 10),
-  //               Text('이 기능을 사용하면 다음 로그인부터 지문이나 얼굴 인식으로 빠르게 로그인할 수 있습니다.'),
-  //             ],
-  //           ),
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: Text('나중에'),
-  //             onPressed: () {
-  //               Navigator.of(context).pop(false);
-  //             },
-  //           ),
-  //           ElevatedButton(
-  //             child: Text('설정하기'),
-  //             onPressed: () {
-  //               Navigator.of(context).pop(true);
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   ) ?? false;
-  // }
+  Future<bool> setBiometricAuth(String userId) async {
+    bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+    if (!canCheckBiometrics) {
+      print("이 기기에서는 생체 인증을 사용할 수 없습니다.");
+      return false;
+    }
+
+    bool didAuthenticate = await _authenticateWithBiometrics('생체 인증을 설정하려면 인증해주세요.');
+    if (didAuthenticate) {
+      await _secureStorage.write(key: 'biometric_enabled_$userId', value: 'true');
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> isBiometricEnabled(String userId) async {
+    String? enabled = await _secureStorage.read(key: 'biometric_enabled_$userId');
+    return enabled == 'true';
+  }
+
+  String getCurrentUserId() {
+    final user = supabase.auth.currentUser;
+    if (user != null) {
+      return user.id;
+    }
+    throw Exception('No user is currently logged in');
+  }
 
   Future<bool> autoLogin() async {
     try {
@@ -59,37 +54,25 @@ class AuthService {
       if (session != null) {
         print("유효한 세션 발견. 사용자: ${session.user.email}");
 
-        // 세션 만료 확인
-        final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        if (now < session.expiresAt!) {
-          print("세션이 유효합니다. 지문 인식 시도.");
+        String? storedUserId = await _secureStorage.read(key: 'lastSignedInUser');
+        if (storedUserId != session.user.id) {
+          print("저장된 사용자 ID와 현재 세션의 사용자 ID가 일치하지 않습니다.");
+          return false;
+        }
 
-          // 지문 인식 가능 여부 확인
-          bool authenticated = await _authenticateWithBiometrics();
-          if (authenticated) {
-            print("지문 인식 성공. 자동 로그인 완료.");
-            return true;
-          } else {
-            print("지문 인식 실패.");
-            return false;
-          }
+        bool biometricEnabled = await isBiometricEnabled(session.user.id);
+        if (!biometricEnabled) {
+          print("이 계정에 대해 생체 인증이 설정되지 않았습니다.");
+          return false;
+        }
+
+        bool authenticated = await _authenticateWithBiometrics('로그인하려면 생체 인증을 사용하세요.');
+        if (authenticated) {
+          print("생체 인증 성공. 자동 로그인 완료.");
+          return true;
         } else {
-          print("세션이 만료되었습니다. 새로고침 시도.");
-          try {
-            final refreshedSession = await supabase.auth.refreshSession();
-            if (refreshedSession.session != null) {
-              print(
-                  "세션 새로고침 성공. 새 만료 시간: ${DateTime.fromMillisecondsSinceEpoch(refreshedSession.session!.expiresAt! * 1000)}");
-              // 세션 새로고침 후 지문 인식 시도
-              return await _authenticateWithBiometrics();
-            } else {
-              print("세션 새로고침 실패: 새 세션이 null입니다.");
-              return false;
-            }
-          } catch (e) {
-            print("세션 새로고침 실패: $e");
-            return false;
-          }
+          print("생체 인증 실패.");
+          return false;
         }
       } else {
         print("유효한 세션이 없습니다.");
@@ -101,18 +84,9 @@ class AuthService {
     }
   }
 
-  Future<bool> _authenticateWithBiometrics() async {
-    final LocalAuthentication localAuth = LocalAuthentication();
-
+  Future<bool> _authenticateWithBiometrics(String reason) async {
     try {
-      bool canCheckBiometrics = await localAuth.canCheckBiometrics;
-      if (!canCheckBiometrics) {
-        print("이 기기에서는 생체 인증을 사용할 수 없습니다.");
-        return false;
-      }
-
-      List<BiometricType> availableBiometrics =
-          await localAuth.getAvailableBiometrics();
+      List<BiometricType> availableBiometrics = await _localAuth.getAvailableBiometrics();
       print("사용 가능한 생체 인증 방식: $availableBiometrics");
 
       String getBiometricHint(List<BiometricType> types) {
@@ -127,12 +101,10 @@ class AuthService {
         }
       }
 
-      String authReason = '생체 인증을 사용하여 로그인';
-      // String biometricHint = '생체 인증을 시작합니다';
       String biometricHint = getBiometricHint(availableBiometrics);
 
-      bool didAuthenticate = await localAuth.authenticate(
-        localizedReason: authReason,
+      bool didAuthenticate = await _localAuth.authenticate(
+        localizedReason: reason,
         authMessages: [
           AndroidAuthMessages(
             signInTitle: '생체 인증',
@@ -140,7 +112,7 @@ class AuthService {
             biometricHint: biometricHint,
             biometricNotRecognized: '인식할 수 없습니다',
             biometricSuccess: '인증 성공',
-            biometricRequiredTitle: '생체 인증이 필요',
+            biometricRequiredTitle: '생체 인증이 필요합니다',
           ),
         ],
         options: const AuthenticationOptions(
@@ -151,23 +123,19 @@ class AuthService {
         ),
       );
 
-      if (didAuthenticate) {
-        print("지문 인증 성공");
-        return true;
-      } else {
-        print("지문 인증 실패 또는 취소");
-        return false;
-      }
-    } on PlatformException catch (e) {
-      print("지문 인증 중 플랫폼 오류 발생: ${e.message}");
-      return false;
+      return didAuthenticate;
     } catch (e) {
-      print("지문 인증 중 예상치 못한 오류 발생: $e");
+      print("생체 인증 중 오류 발생: $e");
       return false;
     }
   }
 
   Future<void> signOut() async {
+    final userId = supabase.auth.currentUser?.id;
     await supabase.auth.signOut();
+    if (userId != null) {
+      await _secureStorage.delete(key: 'biometric_enabled_$userId');
+    }
+    await _secureStorage.delete(key: 'lastSignedInUser');
   }
 }
