@@ -26,11 +26,18 @@ if (flutterVersionName == null) {
 android {
     namespace = "com.example.maplis_demo"
     compileSdk = flutter.compileSdkVersion
+//    compileSdk = 33
     ndkVersion = flutter.ndkVersion
-
+//    ndkVersion = "25.1.8937393"
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+//        sourceCompatibility = JavaVersion.VERSION_1_8
+//        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11' // Kotlin 코드를 위한 JVM 타겟도 추가
     }
 
     defaultConfig {
